@@ -35,25 +35,31 @@ public class Statistics {
     but was:<{"sum":[99388.99,"avg":49.69,"max":99.95,"min":0.02],"count":2000}>
     * */
 
+
+
+    /*
+    {"sum":["99388.99","avg":"49.69","max":"99.95","min":"0.02"],"count":2000}
+    {"sum":[99388.99,"avg":49.69,"max":99.95,"min":0.02],"count":2000}
+    * */
     @NotNull
     @Column(name = "sum")
     @Min(0)
-    private BigDecimal sum;
+    private String sum;
 
     @NotNull
     @Column(name = "avg")
     @Min(0)
-    private BigDecimal avg;
+    private String avg;
 
     @NotNull
     @Column(name = "max")
     @Min(0)
-    private BigDecimal max;
+    private String max;
 
     @NotNull
     @Column(name = "min")
     @Min(0)
-    private BigDecimal min;
+    private String min;
 
     @NotNull
     @Column(name = "count")

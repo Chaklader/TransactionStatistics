@@ -33,7 +33,18 @@ public class StatisticsServiceImpl implements StatisticsService {
 
             if (transactions.isEmpty()) {
 
-                return Statistics.builder().build();
+
+                final BigDecimal zero = (BigDecimal.ZERO).setScale(2, RoundingMode.HALF_UP);
+
+                final Statistics emptyStatistics = Statistics.builder()
+                                             .sum(String.valueOf(zero))
+                                             .avg(String.valueOf(zero))
+                                             .max(String.valueOf(zero))
+                                             .min(String.valueOf(zero))
+                                             .count(0L)
+                                             .build();
+
+                return emptyStatistics;
             }
 
             final Stream<BigDecimal> transactionsAmounts = transactions.stream().map(Transaction::getTransactionAmount);
@@ -43,19 +54,24 @@ public class StatisticsServiceImpl implements StatisticsService {
 
             final long totalNumOfTransactions = BigDecimal.valueOf(transactions.size()).longValue();
 
-            final BigDecimal sumOfTransactionsAmount = transactionsAmountsList.stream().reduce(BigDecimal.ZERO, BigDecimal::add);
+            final BigDecimal sumOfTransactionsAmount = transactionsAmountsList.stream().reduce(BigDecimal.ZERO, BigDecimal::add).setScale(2, RoundingMode.HALF_UP);
 
             final BigDecimal averageTransactionAmount = sumOfTransactionsAmount.divide(BigDecimal.valueOf(totalNumOfTransactions), 2, RoundingMode.HALF_UP);
 
-            final BigDecimal maxTransactionAmount = transactionsAmountsList.stream().max((Comparator.naturalOrder())).orElseThrow(NoSuchElementException::new);
-            final BigDecimal minTransactionAmount = transactionsAmountsList.stream().min((Comparator.naturalOrder())).orElseThrow(NoSuchElementException::new);
+            final BigDecimal maxTransactionAmount = transactionsAmountsList.stream().max((Comparator.naturalOrder())).orElseThrow(NoSuchElementException::new).setScale(2, RoundingMode.HALF_UP);
+            final BigDecimal minTransactionAmount = transactionsAmountsList.stream().min((Comparator.naturalOrder())).orElseThrow(NoSuchElementException::new).setScale(2, RoundingMode.HALF_UP);
+
+
+            // expected:<{"sum":"11[.00","avg":"3.67","max":"5.00","min":"3.00]","count":3}>
+
+            // but was:<{"sum":"11[","avg":"3.67","max":"5","min":"3]"
 
             final Statistics statistics = Statistics.builder()
 
-                                              .sum(sumOfTransactionsAmount)
-                                              .avg(averageTransactionAmount)
-                                              .max(maxTransactionAmount)
-                                              .min(minTransactionAmount)
+                                              .sum(String.valueOf(sumOfTransactionsAmount))
+                                              .avg(String.valueOf(averageTransactionAmount))
+                                              .max(String.valueOf(maxTransactionAmount))
+                                              .min(String.valueOf(minTransactionAmount))
                                               .count(totalNumOfTransactions)
 
                                               .build();
