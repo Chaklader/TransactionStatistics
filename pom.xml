@@ -13,9 +13,6 @@
         <java.version>15</java.version>
 
         <maven.compiler.release>14</maven.compiler.release>
-
-<!--        <maven.compiler.source>14</maven.compiler.source>-->
-<!--        <maven.compiler.target>14</maven.compiler.target>-->
     </properties>
 
     <parent>
