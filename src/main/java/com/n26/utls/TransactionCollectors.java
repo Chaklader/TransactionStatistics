@@ -4,6 +4,7 @@ import com.n26.model.Transaction;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 
 /**
@@ -22,8 +23,10 @@ public class TransactionCollectors {
     public synchronized static void addTransaction(Transaction transaction) {
 
         try {
+            final List<Transaction> transactionList = getTransactionList();
 
-            final boolean isTransactionAdded = getTransactionList().add(transaction);
+            final boolean isTransactionAdded = transactionList.add(transaction);
+            transactionList.sort(Comparator.comparing(Transaction::getLocalDateTime));
 
             log.info("add a new transaction to the transactions collector");
 

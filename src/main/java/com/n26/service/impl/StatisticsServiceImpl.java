@@ -1,5 +1,6 @@
 package com.n26.service.impl;
 
+
 import com.n26.model.Statistics;
 import com.n26.model.Transaction;
 import com.n26.service.StatisticsService;
@@ -35,20 +36,7 @@ public class StatisticsServiceImpl implements StatisticsService {
 
             if (transactions.isEmpty()) {
 
-
-                final BigDecimal zero = (BigDecimal.ZERO).setScale(2, RoundingMode.HALF_UP);
-
-                final Statistics EMPTY_STATISTICS = Statistics.builder()
-                                                        .sum(String.valueOf(zero))
-                                                        .avg(String.valueOf(zero))
-                                                        .max(String.valueOf(zero))
-                                                        .min(String.valueOf(zero))
-                                                        .count(0L)
-                                                        .build();
-
-                log.info("Create an empty statistics for the transactions ..");
-
-                return EMPTY_STATISTICS;
+                return createEmptyStatisticsPojo();
             }
 
 
@@ -92,12 +80,28 @@ public class StatisticsServiceImpl implements StatisticsService {
         return null;
     }
 
+    private Statistics createEmptyStatisticsPojo() {
+
+        final BigDecimal zero = (BigDecimal.ZERO).setScale(2, RoundingMode.HALF_UP);
+
+        final Statistics EMPTY_STATISTICS = Statistics.builder()
+                                                .sum(String.valueOf(zero))
+                                                .avg(String.valueOf(zero))
+                                                .max(String.valueOf(zero))
+                                                .min(String.valueOf(zero))
+                                                .count(0L)
+                                                .build();
+
+        log.info("Create an empty statistics for the transactions ..");
+
+        return EMPTY_STATISTICS;
+    }
 
     private void deleteOlderTransaction(List<Transaction> transactions) {
 
         final int initialTransactionsSize = transactions.size();
 
-        final boolean isOlderTransactionsDeleted = transactions.removeIf(tx -> Duration.between(tx.getLocalDateTime(), LocalDateTime.now(ZoneOffset.UTC)).toSeconds() >= 60);
+        final boolean isOlderTransactionsDeleted = transactions.removeIf(transaction -> Duration.between(transaction.getLocalDateTime(), LocalDateTime.now(ZoneOffset.UTC)).toSeconds() >= 60);
 
         if (isOlderTransactionsDeleted) {
 

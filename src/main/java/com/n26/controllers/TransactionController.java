@@ -24,13 +24,11 @@ import javax.validation.Valid;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
-import java.util.List;
 
 
 /**
  * Created by Chaklader on Apr, 2021
  */
-
 @Slf4j
 @RestController
 @RequestMapping("/")
@@ -44,24 +42,6 @@ public class TransactionController {
     @Autowired
     private StatisticsService statisticsService;
 
-
-
-
-
-    /*
-
-        Processing request 163 GET /statistics
-        2021-04-16 12:00:40.341  INFO 79192 --- [           main] c.n.service.impl.StatisticsServiceImpl   : create new statistics for the last 60 sec transactions with value = Statistics(sum=1869.55, avg=46.74, max=89.42, min=2.11, count=40)
-
-        Sleeping for 5000 ms.
-
-        Processing request 164 GET /statistics
-        2021-04-16 12:00:45.347  INFO 79192 --- [           main] c.n.service.impl.StatisticsServiceImpl   : create new statistics for the last 60 sec transactions with value = Statistics(sum=1869.55, avg=46.74, max=89.42, min=2.11, count=40)
-        Test Failed: Reason: Response Json does not match with the expected Json
-
-        Expected: {"sum":"1626.62","avg":"47.84","max":"89.42","min":"2.11","count":34}
-        Actual  : {"sum":"1869.55","avg":"46.74","max":"89.42","min":"2.11","count":40}
-    * */
 
     @Operation(description = "create a transaction using the request JSON data")
 
@@ -91,7 +71,6 @@ public class TransactionController {
 
             final long durationBetweenTransactionTimeStampAndNow = Duration.between(transactionTimestamp, localDateTimeNow).toSeconds();
 
-
             if (durationBetweenTransactionTimeStampAndNow >= 60) {
 
                 return new ResponseEntity<>(ApiResponseMessage.getGenericApiResponse(Boolean.FALSE, HttpStatus.NO_CONTENT,
@@ -108,6 +87,8 @@ public class TransactionController {
             return new ResponseEntity<>(ApiResponseMessage.getInternalServerError(), new HttpHeaders(), HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
+
+
 
 
     @Operation(description = "get the statistics of all transactions for the last 60 sec")
@@ -139,6 +120,8 @@ public class TransactionController {
             return new ResponseEntity<>(ApiResponseMessage.getInternalServerError(), new HttpHeaders(), HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
+
+
 
 
     @Operation(description = "delete all the transactions from the local storage")
