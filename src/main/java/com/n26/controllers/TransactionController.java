@@ -43,6 +43,8 @@ public class TransactionController {
     private StatisticsService statisticsService;
 
 
+
+
     @Operation(description = "create a transaction using the request JSON data")
 
     @ApiResponses(value = {
@@ -75,6 +77,7 @@ public class TransactionController {
 
                 return new ResponseEntity<>(ApiResponseMessage.getGenericApiResponse(Boolean.FALSE, HttpStatus.NO_CONTENT,
                     MessageConstant.OLDER_TRANSACTION), new HttpHeaders(), HttpStatus.NO_CONTENT);
+
             }
 
             final Transaction transaction = transactionService.createTransaction(transactionDto);

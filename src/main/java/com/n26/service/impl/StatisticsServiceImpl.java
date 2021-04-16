@@ -6,8 +6,7 @@ import com.n26.model.Transaction;
 import com.n26.service.StatisticsService;
 import com.n26.utls.TransactionCollectors;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.cache.annotation.CacheConfig;
-import org.springframework.cache.annotation.CachePut;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -84,6 +83,7 @@ public class StatisticsServiceImpl implements StatisticsService {
     }
 
 
+    @CacheEvict(value = "transactions", allEntries = true)
     public List<Transaction> getAllTransactions() {
 
         final List<Transaction> transactions = TransactionCollectors.getTransactionList();
@@ -97,7 +97,7 @@ public class StatisticsServiceImpl implements StatisticsService {
     }
 
 
-    private Statistics createEmptyStatisticsPojo() {
+    private static Statistics createEmptyStatisticsPojo() {
 
         final BigDecimal zero = (BigDecimal.ZERO).setScale(2, RoundingMode.HALF_UP);
 
@@ -114,8 +114,6 @@ public class StatisticsServiceImpl implements StatisticsService {
         return EMPTY_STATISTICS;
     }
 
-
-
     private void deleteOlderTransaction(List<Transaction> transactions) {
 
         final int initialTransactionsSize = transactions.size();
@@ -125,7 +123,10 @@ public class StatisticsServiceImpl implements StatisticsService {
         if (isOlderTransactionsDeleted) {
 
             log.info("we have deleted translations that are older than 60 seconds and the deleted transactions count =" + (initialTransactionsSize - transactions.size()));
+            return;
         }
+
+        log.info("No transactions are deleted...");
     }
 
 
