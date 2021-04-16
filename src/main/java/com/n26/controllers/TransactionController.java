@@ -89,22 +89,10 @@ public class TransactionController {
                     MessageConstant.FUTURE_DATE_TRANSACTION), new HttpHeaders(), HttpStatus.UNPROCESSABLE_ENTITY);
             }
 
-//            localDateTimeNow.isBefore(transactionTimestamp)
             final long durationBetweenTransactionTimeStampAndNow = Duration.between(transactionTimestamp, localDateTimeNow).toSeconds();
 
-            if (transactionDto.getAmount().toString().equalsIgnoreCase("127.96")) {
-
-                log.info("Breaks the test" + "Transcsation timestamp = " + transactionDto.getTimestamp().toString() + " " + "Current timestamp = " + LocalDateTime.now(ZoneOffset.UTC));
-                log.info("Duration between the transactions = " + durationBetweenTransactionTimeStampAndNow);
-            }
 
             if (durationBetweenTransactionTimeStampAndNow >= 60) {
-
-                final List<Transaction> allTransactions = transactionService.getAllTransactions();
-
-                log.info("Size of the transactions = " + allTransactions.size());
-
-                transactionService.deleteAllTransactions();
 
                 return new ResponseEntity<>(ApiResponseMessage.getGenericApiResponse(Boolean.FALSE, HttpStatus.NO_CONTENT,
                     MessageConstant.OLDER_TRANSACTION), new HttpHeaders(), HttpStatus.NO_CONTENT);
@@ -133,8 +121,6 @@ public class TransactionController {
 
     @GetMapping("/statistics")
     public ResponseEntity<Object> getTransactionStatistics() {
-
-        // expected:<20[4]> but was:<20[1]
 
         try {
             final Statistics statistics = statisticsService.getTransactionsStatistics();
@@ -184,4 +170,6 @@ public class TransactionController {
             return new ResponseEntity<>(ApiResponseMessage.getInternalServerError(), new HttpHeaders(), HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
+
+
 }

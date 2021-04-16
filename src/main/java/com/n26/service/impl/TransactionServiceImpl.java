@@ -5,9 +5,6 @@ import com.n26.model.Transaction;
 import com.n26.service.TransactionService;
 import com.n26.utls.TransactionCollectors;
 import lombok.extern.slf4j.Slf4j;
-//import org.modelmapper.ModelMapper;
-import org.modelmapper.ModelMapper;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -22,28 +19,10 @@ import java.util.UUID;
 public class TransactionServiceImpl implements TransactionService {
 
 
-//    @Autowired
-//    private ModelMapper modelMapper;
-
-
     @Override
     public synchronized Transaction createTransaction(TransactionDto transactionDto) {
 
         try {
-//            Transaction newTransaction = modelMapper.map(transactionDto, Transaction.class);
-//
-//            if (newTransaction != null) {
-//
-////                newTransaction.setUuid(UUID.randomUUID());
-//
-//                newTransaction.setTransactionAmount(transactionDto.getAmount());
-//                newTransaction.setLocalDateTime(transactionDto.getTimestamp());
-//
-//                TransactionCollectors.addTransaction(newTransaction);
-//
-//                return newTransaction;
-//            }
-
             final Transaction transaction = Transaction.builder()
                                           .uuid(UUID.randomUUID())
                                           .transactionAmount(transactionDto.getAmount())

@@ -5,15 +5,14 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import javax.persistence.*;
+import javax.persistence.Column;
 import javax.validation.constraints.Min;
 import javax.validation.constraints.NotNull;
-import java.util.UUID;
+
 
 /**
  * Created by Chaklader on Apr, 2021
  */
-
 @Data
 @Builder
 @NoArgsConstructor
