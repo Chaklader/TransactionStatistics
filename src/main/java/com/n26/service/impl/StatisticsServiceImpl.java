@@ -16,6 +16,7 @@ import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.Comparator;
 import java.util.List;
+import java.util.ListIterator;
 import java.util.NoSuchElementException;
 import java.util.stream.Collectors;
 
@@ -118,15 +119,30 @@ public class StatisticsServiceImpl implements StatisticsService {
 
         final int initialTransactionsSize = transactions.size();
 
-        final boolean isOlderTransactionsDeleted = transactions.removeIf(transaction -> Duration.between(transaction.getTimestamp(), LocalDateTime.now(ZoneOffset.UTC)).toSeconds() >= 60);
+        final ListIterator<Transaction> transactionListIterator = transactions.listIterator();
 
-        if (isOlderTransactionsDeleted) {
+        while (transactionListIterator.hasNext()) {
 
-            log.info("we have deleted translations that are older than 60 seconds and the deleted transactions count =" + (initialTransactionsSize - transactions.size()));
-            return;
+            final Transaction transaction = transactionListIterator.next();
+
+            final boolean isDeletedTransaction = Duration.between((transaction).getTimestamp(), LocalDateTime.now(ZoneOffset.UTC)).toSeconds() >= 60;
+
+            if (isDeletedTransaction) {
+
+                transactionListIterator.remove();
+                continue;
+            }
+
+            break;
         }
 
-        log.info("No transactions are deleted...");
+        final int totalDeletedTransactions = initialTransactionsSize - transactions.size();
+
+        if (totalDeletedTransactions > 0) {
+
+            log.info("we have deleted translations that are older than 60 seconds and the deleted transactions count =" + totalDeletedTransactions);
+        }
+
     }
 
 

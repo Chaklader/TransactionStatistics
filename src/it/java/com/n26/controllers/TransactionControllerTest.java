@@ -40,8 +40,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 
-
-
 /**
  * Created by Chaklader on Apr, 2021
  */
@@ -140,7 +138,6 @@ public class TransactionControllerTest {
     }
 
 
-
     @Test
     public void post_createsNewTransactionWithPastTimestampAndCorrectAmount_andReturnsNonContentJSON() throws Exception {
 
@@ -177,17 +174,13 @@ public class TransactionControllerTest {
 
     }
 
-
-
-
     @Test
-    public void post_createsNewTransactionWithPastTimestampAndCorrectAmount_andReturnsNonContentJSON2() throws Exception {
+    public void post_createsNewTransactionWithTimestampAndInvalidAmount_andReturnsUnprocessableEntityEntityJSON() throws Exception {
 
 
         String content = FileUtils.readFileToString(new File("src/it/resources/testcases/TransactionWithUnParsableData_1.sjon"), StandardCharsets.UTF_8);
 
-
-        Mockito.when(transactionService.createTransaction(Mockito.any(TransactionDto.class))).thenReturn(null);
+        Mockito.when(transactionService.createTransaction(Mockito.any(TransactionDto.class))).thenReturn(Transaction.builder().build());
 
         final MockHttpServletRequestBuilder builder = MockMvcRequestBuilders.post("/transactions")
                                                           .contentType(MediaType.APPLICATION_JSON_VALUE)
@@ -206,7 +199,6 @@ public class TransactionControllerTest {
 
         resultActions.andExpect(status().isUnprocessableEntity())
             .andExpect(MockMvcResultMatchers.content().json(expectedResponseString));
-
     }
 
 
