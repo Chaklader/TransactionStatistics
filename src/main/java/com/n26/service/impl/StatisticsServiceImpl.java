@@ -6,6 +6,8 @@ import com.n26.model.Transaction;
 import com.n26.service.StatisticsService;
 import com.n26.utls.TransactionCollectors;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.CacheConfig;
+import org.springframework.cache.annotation.CachePut;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -22,8 +24,9 @@ import java.util.stream.Collectors;
 /**
  * Created by Chaklader on Apr, 2021
  */
-@Service
 @Slf4j
+
+@Service
 public class StatisticsServiceImpl implements StatisticsService {
 
 
@@ -32,7 +35,7 @@ public class StatisticsServiceImpl implements StatisticsService {
 
         try {
 
-            final List<Transaction> transactions = TransactionCollectors.getTransactionList();
+            final List<Transaction> transactions = getAllTransactions();
 
             if (transactions.isEmpty()) {
 
@@ -80,6 +83,20 @@ public class StatisticsServiceImpl implements StatisticsService {
         return null;
     }
 
+
+    public List<Transaction> getAllTransactions() {
+
+        final List<Transaction> transactions = TransactionCollectors.getTransactionList();
+
+        if (transactions == null) {
+
+            log.info("we received null after calling the transaction list");
+        }
+
+        return transactions;
+    }
+
+
     private Statistics createEmptyStatisticsPojo() {
 
         final BigDecimal zero = (BigDecimal.ZERO).setScale(2, RoundingMode.HALF_UP);
@@ -96,6 +113,8 @@ public class StatisticsServiceImpl implements StatisticsService {
 
         return EMPTY_STATISTICS;
     }
+
+
 
     private void deleteOlderTransaction(List<Transaction> transactions) {
 

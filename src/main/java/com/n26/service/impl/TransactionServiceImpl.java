@@ -5,6 +5,7 @@ import com.n26.model.Transaction;
 import com.n26.service.TransactionService;
 import com.n26.utls.TransactionCollectors;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -40,6 +41,7 @@ public class TransactionServiceImpl implements TransactionService {
         return null;
     }
 
+    @CacheEvict(value = "transactions", allEntries = true)
     @Override
     public synchronized boolean deleteAllTransactions() {
 
@@ -59,16 +61,16 @@ public class TransactionServiceImpl implements TransactionService {
         return false;
     }
 
-    @Override
-    public List<Transaction> getAllTransactions() {
-
-        final List<Transaction> transactions = TransactionCollectors.getTransactionList();
-
-        if(transactions==null){
-
-            log.info("we received null after calling the transaction list");
-        }
-
-        return transactions;
-    }
+//    @Override
+//    public List<Transaction> getAllTransactions() {
+//
+//        final List<Transaction> transactions = TransactionCollectors.getTransactionList();
+//
+//        if(transactions==null){
+//
+//            log.info("we received null after calling the transaction list");
+//        }
+//
+//        return transactions;
+//    }
 }

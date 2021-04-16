@@ -15,5 +15,5 @@ public interface TransactionService {
 
     boolean deleteAllTransactions();
 
-    List<Transaction> getAllTransactions();
+//    List<Transaction> getAllTransactions();
 }
