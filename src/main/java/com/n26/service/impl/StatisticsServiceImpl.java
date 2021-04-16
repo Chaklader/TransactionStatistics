@@ -44,7 +44,7 @@ public class StatisticsServiceImpl implements StatisticsService {
 
             deleteOlderTransaction(transactions);
 
-            final List<BigDecimal> transactionsAmountsList = transactions.stream().map(Transaction::getTransactionAmount).collect(Collectors.toList());
+            final List<BigDecimal> transactionsAmountsList = transactions.stream().map(Transaction::getAmount).collect(Collectors.toList());
 
 
             final long totalNumOfTransactions = BigDecimal.valueOf(transactions.size()).longValue();
@@ -118,7 +118,7 @@ public class StatisticsServiceImpl implements StatisticsService {
 
         final int initialTransactionsSize = transactions.size();
 
-        final boolean isOlderTransactionsDeleted = transactions.removeIf(transaction -> Duration.between(transaction.getLocalDateTime(), LocalDateTime.now(ZoneOffset.UTC)).toSeconds() >= 60);
+        final boolean isOlderTransactionsDeleted = transactions.removeIf(transaction -> Duration.between(transaction.getTimestamp(), LocalDateTime.now(ZoneOffset.UTC)).toSeconds() >= 60);
 
         if (isOlderTransactionsDeleted) {
 

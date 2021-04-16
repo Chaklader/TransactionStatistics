@@ -26,8 +26,8 @@ public class TransactionServiceImpl implements TransactionService {
         try {
             final Transaction transaction = Transaction.builder()
                                           .uuid(UUID.randomUUID())
-                                          .transactionAmount(transactionDto.getAmount())
-                                          .localDateTime(transactionDto.getTimestamp())
+                                          .amount(transactionDto.getAmount())
+                                          .timestamp(transactionDto.getTimestamp())
                                           .build();
 
             TransactionCollectors.addTransaction(transaction);

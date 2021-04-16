@@ -26,7 +26,7 @@ public class TransactionCollectors {
             final List<Transaction> transactionList = getTransactionList();
 
             final boolean isTransactionAdded = transactionList.add(transaction);
-            transactionList.sort(Comparator.comparing(Transaction::getLocalDateTime));
+            transactionList.sort(Comparator.comparing(Transaction::getTimestamp));
 
             log.info("add a new transaction to the transactions collector");
 

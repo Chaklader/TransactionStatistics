@@ -32,9 +32,9 @@ public class Transaction {
     @NotNull
     @Column(name = "amount")
     @Min(0)
-    private BigDecimal transactionAmount;
+    private BigDecimal amount;
 
     @NotNull
     @Column(name = "timestamp")
-    private LocalDateTime localDateTime;
+    private LocalDateTime timestamp;
 }

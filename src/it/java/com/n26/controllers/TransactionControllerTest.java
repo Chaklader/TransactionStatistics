@@ -5,34 +5,41 @@ import com.n26.dto.TransactionDto;
 import com.n26.model.Transaction;
 import com.n26.service.StatisticsService;
 import com.n26.service.TransactionService;
+import com.n26.utls.ApiResponseMessage;
+import com.n26.utls.MessageConstant;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.io.FileUtils;
+import org.json.JSONObject;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureWebMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
 
+import java.io.File;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
-import java.time.temporal.ChronoUnit;
-import java.util.Arrays;
+import java.util.Map;
 import java.util.UUID;
 
 import static org.hamcrest.Matchers.is;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
+
 
 
 /**
@@ -41,7 +48,12 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @ExtendWith(SpringExtension.class)
 @WebMvcTest(TransactionController.class)
 @ActiveProfiles("test")
+
+@Slf4j
 public class TransactionControllerTest {
+
+
+    private final UUID RANDOM_TRANSACTION_UUID = UUID.randomUUID();
 
 
     @Autowired
@@ -56,57 +68,160 @@ public class TransactionControllerTest {
     @MockBean
     private StatisticsService statisticsService;
 
+
     @Test
-    public void post_createsNewProperty_andReturnsObjWithIsCreated() throws Exception {
+    public void post_createsNewTransactionWithCorrectTimestampAndAmount_andReturnsCreatedTransactionJSON() throws Exception {
 
-        TransactionDto transaction = createTransactionWithProvidedData2(100.50, 10);
-        Transaction transaction32 = createTransactionWithProvidedData(100.50, 10);
+        final LocalDateTime localDateTimeNowMinusSeconds = LocalDateTime.now(ZoneOffset.UTC).minusSeconds(10);
+        Transaction transaction = createTransactionWithProvidedData(100.50, localDateTimeNowMinusSeconds);
 
-        Mockito.when(transactionService.createTransaction(Mockito.any(TransactionDto.class))).thenReturn(transaction32);
+        // make transaction JSON string
+        final String transactionJSON = this.objectMapper.writeValueAsString(transaction);
+        JSONObject transactionJsonObject = new JSONObject(transactionJSON);
+
+        transactionJsonObject.remove("uuid");
+
+        final String transactionStr = transactionJsonObject.toString();
 
 
-        final byte[] bytes = this.objectMapper.writeValueAsBytes(transaction);
-        final String s = Arrays.toString(bytes);
+        Mockito.when(transactionService.createTransaction(Mockito.any(TransactionDto.class))).thenReturn(transaction);
 
-        MockHttpServletRequestBuilder builder = MockMvcRequestBuilders.post("/transactions")
-                                                    .contentType(MediaType.APPLICATION_JSON_VALUE).accept(MediaType.APPLICATION_JSON)
-                                                    .characterEncoding("UTF-8").content(this.objectMapper.writeValueAsBytes(transaction));
 
-        mockMvc.perform(builder).andExpect(status().isCreated())
-            .andExpect(jsonPath("$.transactionAmount", is(100.5)))
-            .andExpect(MockMvcResultMatchers.content().string(this.objectMapper.writeValueAsString(transaction32)));
+        final MockHttpServletRequestBuilder builder = MockMvcRequestBuilders.post("/transactions")
+                                                          .contentType(MediaType.APPLICATION_JSON_VALUE)
+                                                          .accept(MediaType.APPLICATION_JSON)
+                                                          .characterEncoding("UTF-8")
+                                                          .content(transactionStr);
+
+        final ResultActions resultActions = mockMvc.perform(builder);
+
+        resultActions.andExpect(status().isCreated())
+            .andExpect(jsonPath("$.amount", is(100.5)))
+            .andExpect(jsonPath("$.timestamp", is(localDateTimeNowMinusSeconds.toString())))
+            .andExpect(MockMvcResultMatchers.content().string(this.objectMapper.writeValueAsString(transaction)));
+
     }
 
 
-    final UUID fixed = UUID.randomUUID();
+    @Test
+    public void post_createsNewTransactionWithFutureTimestampAndCorrectAmount_andReturnsUnProcessableEntityJSON() throws Exception {
 
-    private Transaction createTransactionWithProvidedData(double amount, long substructionSeconds){
+        final LocalDateTime localDateTimeNowPlusSeconds = LocalDateTime.now(ZoneOffset.UTC).plusSeconds(30);
+        Transaction transaction = createTransactionWithProvidedData(100.50, localDateTimeNowPlusSeconds);
+
+        final String transactionJSON = this.objectMapper.writeValueAsString(transaction);
+        JSONObject transactionJsonObject = new JSONObject(transactionJSON);
+
+        transactionJsonObject.remove("uuid");
+
+        final String transactionStr = transactionJsonObject.toString();
 
 
-        final LocalDateTime minus = LocalDateTime.now(ZoneOffset.UTC).minus(10, ChronoUnit.SECONDS);
+        Mockito.when(transactionService.createTransaction(Mockito.any(TransactionDto.class))).thenReturn(transaction);
+
+        final MockHttpServletRequestBuilder builder = MockMvcRequestBuilders.post("/transactions")
+                                                          .contentType(MediaType.APPLICATION_JSON_VALUE)
+                                                          .accept(MediaType.APPLICATION_JSON)
+                                                          .characterEncoding("UTF-8")
+                                                          .content(transactionStr);
+
+        final ResultActions resultActions = mockMvc.perform(builder);
+
+        final Map<String, Object> expectedResponseMap = ApiResponseMessage.getGenericApiResponse(Boolean.FALSE, HttpStatus.UNPROCESSABLE_ENTITY,
+            MessageConstant.FUTURE_DATE_TRANSACTION);
+
+        JSONObject expectedResponseMapJSON = new JSONObject(expectedResponseMap);
+
+        final String expectedResponseString = expectedResponseMapJSON.toString();
+
+        resultActions.andExpect(status().isUnprocessableEntity())
+            .andExpect(MockMvcResultMatchers.content().json(expectedResponseMapJSON.toString()));
+
+    }
+
+
+
+    @Test
+    public void post_createsNewTransactionWithPastTimestampAndCorrectAmount_andReturnsNonContentJSON() throws Exception {
+
+        final LocalDateTime localDateTimeNowMinusSeconds = LocalDateTime.now(ZoneOffset.UTC).minusSeconds(65);
+        Transaction transaction = createTransactionWithProvidedData(100.50, localDateTimeNowMinusSeconds);
+
+        final String transactionJSON = this.objectMapper.writeValueAsString(transaction);
+        JSONObject transactionJsonObject = new JSONObject(transactionJSON);
+
+        transactionJsonObject.remove("uuid");
+
+        final String transactionStr = transactionJsonObject.toString();
+
+
+        Mockito.when(transactionService.createTransaction(Mockito.any(TransactionDto.class))).thenReturn(transaction);
+
+        final MockHttpServletRequestBuilder builder = MockMvcRequestBuilders.post("/transactions")
+                                                          .contentType(MediaType.APPLICATION_JSON_VALUE)
+                                                          .accept(MediaType.APPLICATION_JSON)
+                                                          .characterEncoding("UTF-8")
+                                                          .content(transactionStr);
+
+        final ResultActions resultActions = mockMvc.perform(builder);
+
+        final Map<String, Object> expectedResponseMap = ApiResponseMessage.getGenericApiResponse(Boolean.FALSE, HttpStatus.NO_CONTENT,
+            MessageConstant.OLDER_TRANSACTION);
+
+        JSONObject expectedResponseMapJSON = new JSONObject(expectedResponseMap);
+
+        final String expectedResponseString = expectedResponseMapJSON.toString();
+
+        resultActions.andExpect(status().isNoContent())
+            .andExpect(MockMvcResultMatchers.content().json(expectedResponseString));
+
+    }
+
+
+
+
+    @Test
+    public void post_createsNewTransactionWithPastTimestampAndCorrectAmount_andReturnsNonContentJSON2() throws Exception {
+
+
+        String content = FileUtils.readFileToString(new File("src/it/resources/testcases/TransactionWithUnParsableData_1.sjon"), StandardCharsets.UTF_8);
+
+
+        Mockito.when(transactionService.createTransaction(Mockito.any(TransactionDto.class))).thenReturn(null);
+
+        final MockHttpServletRequestBuilder builder = MockMvcRequestBuilders.post("/transactions")
+                                                          .contentType(MediaType.APPLICATION_JSON_VALUE)
+                                                          .accept(MediaType.APPLICATION_JSON)
+                                                          .characterEncoding("UTF-8")
+                                                          .content(content);
+
+        final ResultActions resultActions = mockMvc.perform(builder);
+
+        final Map<String, Object> expectedResponseMap = ApiResponseMessage.getGenericApiResponse(Boolean.FALSE, HttpStatus.UNPROCESSABLE_ENTITY,
+            "JSON parse error,  Cannot deserialize value of type `java.math.BigDecimal` from String \"sdss\"");
+
+        JSONObject expectedResponseMapJSON = new JSONObject(expectedResponseMap);
+
+        final String expectedResponseString = expectedResponseMapJSON.toString();
+
+        resultActions.andExpect(status().isUnprocessableEntity())
+            .andExpect(MockMvcResultMatchers.content().json(expectedResponseString));
+
+    }
+
+
+    private Transaction createTransactionWithProvidedData(Double amount, LocalDateTime minus) {
 
         Transaction transaction = Transaction
                                       .builder()
-                                      .transactionAmount(BigDecimal.valueOf(100.50).setScale(2, RoundingMode.HALF_UP))
-                                      .localDateTime(minus)
-                                      .uuid(fixed)
+                                      .amount(BigDecimal.valueOf(100.50).setScale(2, RoundingMode.HALF_UP))
+                                      .timestamp(minus)
+                                      .uuid(RANDOM_TRANSACTION_UUID)
                                       .build();
 
-        return transaction;
-    }
-
-
-    private TransactionDto createTransactionWithProvidedData2(double amount, long substructionSeconds){
-
-
-        final LocalDateTime minus = LocalDateTime.now(ZoneOffset.UTC).minus(10, ChronoUnit.SECONDS);
-
-        TransactionDto transaction = TransactionDto
-                                         .builder()
-                                         .amount(BigDecimal.valueOf(100.50).setScale(2, RoundingMode.HALF_UP))
-                                         .timestamp(minus)
-                                         .build();
+        log.info("created a new transaction using the provided data = " + transaction.toString());
 
         return transaction;
     }
+
 }
