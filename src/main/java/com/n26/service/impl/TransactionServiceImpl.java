@@ -79,4 +79,17 @@ public class TransactionServiceImpl implements TransactionService {
 
         return false;
     }
+
+    @Override
+    public List<Transaction> getAllTransactions() {
+
+        final List<Transaction> transactions = TransactionCollectors.getTransactionList();
+
+        if(transactions==null){
+
+            log.info("we received null after calling the transaction list");
+        }
+
+        return transactions;
+    }
 }

@@ -9,11 +9,13 @@ import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.Duration;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.Comparator;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 
 /**
@@ -36,24 +38,29 @@ public class StatisticsServiceImpl implements StatisticsService {
 
                 final BigDecimal zero = (BigDecimal.ZERO).setScale(2, RoundingMode.HALF_UP);
 
-                final Statistics emptyStatistics = Statistics.builder()
-                                             .sum(String.valueOf(zero))
-                                             .avg(String.valueOf(zero))
-                                             .max(String.valueOf(zero))
-                                             .min(String.valueOf(zero))
-                                             .count(0L)
-                                             .build();
+                final Statistics EMPTY_STATISTICS = Statistics.builder()
+                                                        .sum(String.valueOf(zero))
+                                                        .avg(String.valueOf(zero))
+                                                        .max(String.valueOf(zero))
+                                                        .min(String.valueOf(zero))
+                                                        .count(0L)
+                                                        .build();
 
-                return emptyStatistics;
+                log.info("Create an empty statistics for the transactions ..");
+
+                return EMPTY_STATISTICS;
             }
 
-            final Stream<BigDecimal> transactionsAmounts = transactions.stream().map(Transaction::getTransactionAmount);
 
-            final List<BigDecimal> transactionsAmountsList = transactionsAmounts.collect(Collectors.toList());
+            deleteOlderTransaction(transactions);
+
+            final List<BigDecimal> transactionsAmountsList = transactions.stream().map(Transaction::getTransactionAmount).collect(Collectors.toList());
 
 
             final long totalNumOfTransactions = BigDecimal.valueOf(transactions.size()).longValue();
 
+
+            // make the calculations
             final BigDecimal sumOfTransactionsAmount = transactionsAmountsList.stream().reduce(BigDecimal.ZERO, BigDecimal::add).setScale(2, RoundingMode.HALF_UP);
 
             final BigDecimal averageTransactionAmount = sumOfTransactionsAmount.divide(BigDecimal.valueOf(totalNumOfTransactions), 2, RoundingMode.HALF_UP);
@@ -62,10 +69,7 @@ public class StatisticsServiceImpl implements StatisticsService {
             final BigDecimal minTransactionAmount = transactionsAmountsList.stream().min((Comparator.naturalOrder())).orElseThrow(NoSuchElementException::new).setScale(2, RoundingMode.HALF_UP);
 
 
-            // expected:<{"sum":"11[.00","avg":"3.67","max":"5.00","min":"3.00]","count":3}>
-
-            // but was:<{"sum":"11[","avg":"3.67","max":"5","min":"3]"
-
+            // create the Statistics object
             final Statistics statistics = Statistics.builder()
 
                                               .sum(String.valueOf(sumOfTransactionsAmount))
@@ -76,6 +80,8 @@ public class StatisticsServiceImpl implements StatisticsService {
 
                                               .build();
 
+            log.info("create new statistics for the last 60 sec transactions with value = " + statistics.toString());
+
             return statistics;
 
         } catch (Exception ex) {
@@ -85,4 +91,19 @@ public class StatisticsServiceImpl implements StatisticsService {
 
         return null;
     }
+
+
+    private void deleteOlderTransaction(List<Transaction> transactions) {
+
+        final int initialTransactionsSize = transactions.size();
+
+        final boolean isOlderTransactionsDeleted = transactions.removeIf(tx -> Duration.between(tx.getLocalDateTime(), LocalDateTime.now(ZoneOffset.UTC)).toSeconds() >= 60);
+
+        if (isOlderTransactionsDeleted) {
+
+            log.info("we have deleted translations that are older than 60 seconds and the deleted transactions count =" + (initialTransactionsSize - transactions.size()));
+        }
+    }
+
+
 }

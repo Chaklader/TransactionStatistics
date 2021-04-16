@@ -24,7 +24,7 @@ import javax.validation.Valid;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
-
+import java.util.List;
 
 
 /**
@@ -34,7 +34,7 @@ import java.time.ZoneOffset;
 @Slf4j
 @RestController
 @RequestMapping("/")
-//@Validated
+@Validated
 public class TransactionController {
 
 
@@ -46,6 +46,22 @@ public class TransactionController {
 
 
 
+
+
+    /*
+
+        Processing request 163 GET /statistics
+        2021-04-16 12:00:40.341  INFO 79192 --- [           main] c.n.service.impl.StatisticsServiceImpl   : create new statistics for the last 60 sec transactions with value = Statistics(sum=1869.55, avg=46.74, max=89.42, min=2.11, count=40)
+
+        Sleeping for 5000 ms.
+
+        Processing request 164 GET /statistics
+        2021-04-16 12:00:45.347  INFO 79192 --- [           main] c.n.service.impl.StatisticsServiceImpl   : create new statistics for the last 60 sec transactions with value = Statistics(sum=1869.55, avg=46.74, max=89.42, min=2.11, count=40)
+        Test Failed: Reason: Response Json does not match with the expected Json
+
+        Expected: {"sum":"1626.62","avg":"47.84","max":"89.42","min":"2.11","count":34}
+        Actual  : {"sum":"1869.55","avg":"46.74","max":"89.42","min":"2.11","count":40}
+    * */
 
     @Operation(description = "create a transaction using the request JSON data")
 
@@ -70,11 +86,25 @@ public class TransactionController {
             if (isFutureTransaction) {
 
                 return new ResponseEntity<>(ApiResponseMessage.getGenericApiResponse(Boolean.FALSE, HttpStatus.UNPROCESSABLE_ENTITY,
-                    MessageConstant.FUTURE_DATE_TRANSACTION), new HttpHeaders(), HttpStatus.OK);
+                    MessageConstant.FUTURE_DATE_TRANSACTION), new HttpHeaders(), HttpStatus.UNPROCESSABLE_ENTITY);
             }
 
-            final long secondsDuration = Duration.between(transactionTimestamp, localDateTimeNow).toSeconds();
-            if (secondsDuration > 60) {
+//            localDateTimeNow.isBefore(transactionTimestamp)
+            final long durationBetweenTransactionTimeStampAndNow = Duration.between(transactionTimestamp, localDateTimeNow).toSeconds();
+
+            if (transactionDto.getAmount().toString().equalsIgnoreCase("127.96")) {
+
+                log.info("Breaks the test" + "Transcsation timestamp = " + transactionDto.getTimestamp().toString() + " " + "Current timestamp = " + LocalDateTime.now(ZoneOffset.UTC));
+                log.info("Duration between the transactions = " + durationBetweenTransactionTimeStampAndNow);
+            }
+
+            if (durationBetweenTransactionTimeStampAndNow >= 60) {
+
+                final List<Transaction> allTransactions = transactionService.getAllTransactions();
+
+                log.info("Size of the transactions = " + allTransactions.size());
+
+                transactionService.deleteAllTransactions();
 
                 return new ResponseEntity<>(ApiResponseMessage.getGenericApiResponse(Boolean.FALSE, HttpStatus.NO_CONTENT,
                     MessageConstant.OLDER_TRANSACTION), new HttpHeaders(), HttpStatus.NO_CONTENT);
@@ -103,6 +133,8 @@ public class TransactionController {
 
     @GetMapping("/statistics")
     public ResponseEntity<Object> getTransactionStatistics() {
+
+        // expected:<20[4]> but was:<20[1]
 
         try {
             final Statistics statistics = statisticsService.getTransactionsStatistics();
