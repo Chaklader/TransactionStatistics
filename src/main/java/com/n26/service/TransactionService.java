@@ -14,6 +14,4 @@ public interface TransactionService {
     Transaction createTransaction(TransactionDto transactionDto);
 
     boolean deleteAllTransactions();
-
-//    List<Transaction> getAllTransactions();
 }
