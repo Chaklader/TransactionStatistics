@@ -145,8 +145,8 @@ public class TransactionController {
                     new HttpHeaders(), HttpStatus.NO_CONTENT);
             }
 
-            return new ResponseEntity<>(ApiResponseMessage.getGenericApiResponse(Boolean.FALSE, HttpStatus.NO_CONTENT,
-                MessageConstant.TRANSACTIONS_DELETE_UN_SUCCESS_MSG), new HttpHeaders(), HttpStatus.NO_CONTENT);
+            return new ResponseEntity<>(ApiResponseMessage.getGenericApiResponse(Boolean.FALSE, HttpStatus.NOT_FOUND,
+                MessageConstant.TRANSACTIONS_DELETE_UN_SUCCESS_MSG), new HttpHeaders(), HttpStatus.NOT_FOUND);
 
         } catch (Exception ex) {
 

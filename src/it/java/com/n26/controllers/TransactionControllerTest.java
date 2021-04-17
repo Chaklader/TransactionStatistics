@@ -283,8 +283,8 @@ public class TransactionControllerTest {
 
 
         final Map<String, Object> expectedResponseMap = ApiResponseMessage.getGenericApiResponse(Boolean.FALSE,
-                                                                                                HttpStatus.NOT_FOUND,
-                                                                                                MessageConstant.STATISTICS_RESOURCE_NOT_FOUND_MSG);
+            HttpStatus.NOT_FOUND,
+            MessageConstant.STATISTICS_RESOURCE_NOT_FOUND_MSG);
 
         JSONObject expectedResponseMapJSON = new JSONObject(expectedResponseMap);
 
@@ -292,14 +292,42 @@ public class TransactionControllerTest {
 
 
         final MockHttpServletRequestBuilder builder = MockMvcRequestBuilders.get("/statistics").contentType(MediaType.APPLICATION_JSON)
-                                                                                .accept(MediaType.APPLICATION_JSON)
-                                                                                .characterEncoding("UTF-8");
+                                                          .accept(MediaType.APPLICATION_JSON)
+                                                          .characterEncoding("UTF-8");
 
         final ResultActions resultActions = mockMvc.perform(builder);
 
         resultActions
             .andExpect(status().isNotFound())
             .andExpect(MockMvcResultMatchers.content().json(expectedResponseString));
+    }
+
+
+    @Test
+    public void delete_AllTransactionsWithEmptyRequestBody_returnsNoContentStatus() throws Exception {
+
+
+        Mockito.when(transactionService.deleteAllTransactions()).thenReturn(true);
+
+
+        final Map<String, Object> expectedResponseMap = ApiResponseMessage.getGenericApiResponse(Boolean.TRUE, HttpStatus.NO_CONTENT, MessageConstant.ALL_TRANSACTIONS_DELETED);
+
+        JSONObject expectedResponseMapJSON = new JSONObject(expectedResponseMap);
+
+        final String expectedResponseString = expectedResponseMapJSON.toString();
+
+
+        final MockHttpServletRequestBuilder builder = MockMvcRequestBuilders.delete("/transactions")
+                                                          .contentType(MediaType.APPLICATION_JSON)
+                                                          .accept(MediaType.APPLICATION_JSON)
+                                                          .characterEncoding("UTF-8");
+
+        final ResultActions resultActions = mockMvc.perform(builder);
+
+        resultActions
+            .andExpect(status().isNoContent())
+            .andExpect(MockMvcResultMatchers.content().json(expectedResponseString));
+
     }
 
 
