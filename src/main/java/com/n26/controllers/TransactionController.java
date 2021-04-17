@@ -43,16 +43,14 @@ public class TransactionController {
     private StatisticsService statisticsService;
 
 
-
-
     @Operation(description = "create a transaction using the request JSON data")
 
     @ApiResponses(value = {
         @ApiResponse(responseCode = "201", description = "Create transaction", content = {
             @Content(mediaType = "application/json", schema = @Schema(implementation = Transaction.class))}),
         @ApiResponse(responseCode = "204", description = MessageConstant.OLDER_TRANSACTION, content = @Content),
+        @ApiResponse(responseCode = "422", description = MessageConstant.FIELDS_ARE_NOT_PARSABLE_OR_FUTURE_TRANSACTION, content = @Content),
         @ApiResponse(responseCode = "400", description = MessageConstant.INVALID_JSON_REQUEST, content = @Content),
-        @ApiResponse(responseCode = "200", description = MessageConstant.FIELDS_ARE_NOT_PARSABLE_OR_FUTURE_TRANSACTION, content = @Content),
         @ApiResponse(responseCode = "500", description = MessageConstant.INTERNAL_SERVER_ERROR_MSG, content = @Content)})
 
     @PostMapping(value = "/transactions")
@@ -60,7 +58,6 @@ public class TransactionController {
 
         try {
             final LocalDateTime transactionTimestamp = transactionDto.getTimestamp();
-
             final LocalDateTime localDateTimeNow = LocalDateTime.now(ZoneOffset.UTC);
 
             final boolean isFutureTransaction = transactionTimestamp.isAfter(localDateTimeNow);
@@ -91,14 +88,13 @@ public class TransactionController {
     }
 
 
-
-
     @Operation(description = "get the statistics of all transactions for the last 60 sec")
 
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "get the transaction statistics for last 60 sec", content = {
             @Content(mediaType = "application/json", schema = @Schema(implementation = Statistics.class))}),
         @ApiResponse(responseCode = "404", description = MessageConstant.STATISTICS_RESOURCE_NOT_FOUND_MSG, content = @Content),
+        @ApiResponse(responseCode = "400", description = MessageConstant.INVALID_JSON_REQUEST, content = @Content),
         @ApiResponse(responseCode = "500", description = MessageConstant.INTERNAL_SERVER_ERROR_MSG, content = @Content)})
 
     @GetMapping("/statistics")
@@ -123,14 +119,12 @@ public class TransactionController {
     }
 
 
-
-
     @Operation(description = "delete all the transactions from the local storage")
 
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = MessageConstant.ALL_TRANSACTIONS_DELETED, content = @Content),
-        @ApiResponse(responseCode = "422", description = MessageConstant.TRANSACTIONS_DELETE_UN_SUCCESS_MSG, content = @Content),
         @ApiResponse(responseCode = "400", description = MessageConstant.INVALID_JSON_REQUEST, content = @Content),
+        @ApiResponse(responseCode = "404", description = MessageConstant.TRANSACTIONS_DELETE_UN_SUCCESS_MSG, content = @Content),
+        @ApiResponse(responseCode = "204", description = MessageConstant.ALL_TRANSACTIONS_DELETED, content = @Content),
         @ApiResponse(responseCode = "500", description = MessageConstant.INTERNAL_SERVER_ERROR_MSG, content = @Content)})
 
     @DeleteMapping("/transactions")

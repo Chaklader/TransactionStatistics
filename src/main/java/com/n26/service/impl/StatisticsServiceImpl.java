@@ -78,7 +78,7 @@ public class StatisticsServiceImpl implements StatisticsService {
 
                                               .build();
 
-            log.info("create new statistics for the last 60 sec transactions with value = " + statistics.toString());
+            log.info("create new statistics transactions with value = " + statistics.toString());
 
             return statistics;
 
