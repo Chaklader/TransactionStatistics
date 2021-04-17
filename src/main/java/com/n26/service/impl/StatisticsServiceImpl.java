@@ -106,8 +106,9 @@ public class StatisticsServiceImpl implements StatisticsService {
 
 
     /**
-     * the transactions are sorted ascending order, that means the oldest transaction is at index 0
-     * and we will only remove transactions that has the timestamp >= of 60 sec from the current time.
+     * the transactions are sorted ascending order based on their timestamp, that means the oldest
+     * transaction is at index 0 and we will only remove transactions that has the timestamp >= of 60
+     * sec from the current time.
      * <p>
      * if the condition is not true, we will simply break as the next items of the iterations will not
      * be able to full-fill the condition
@@ -124,13 +125,11 @@ public class StatisticsServiceImpl implements StatisticsService {
 
             final boolean isDeletedTransaction = Duration.between((transaction).getTimestamp(), LocalDateTime.now(ZoneOffset.UTC)).toSeconds() >= 60;
 
-            if (isDeletedTransaction) {
-
-                transactionListIterator.remove();
-                continue;
+            if (!isDeletedTransaction) {
+                break;
             }
 
-            break;
+            transactionListIterator.remove();
         }
 
         final int totalDeletedTransactions = initialTransactionsSize - transactions.size();
