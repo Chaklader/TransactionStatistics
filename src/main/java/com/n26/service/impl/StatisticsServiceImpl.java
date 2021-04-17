@@ -31,9 +31,10 @@ import java.util.stream.Collectors;
 @Service
 public class StatisticsServiceImpl implements StatisticsService {
 
+
+
     @Autowired
     private TransactionCollectors transactionCollectors;
-
 
 
     @Override
