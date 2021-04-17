@@ -2,17 +2,20 @@ package com.n26.controllers;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.n26.dto.TransactionDto;
 import com.n26.model.Statistics;
 import com.n26.model.Transaction;
 import com.n26.service.StatisticsService;
 import com.n26.service.TransactionService;
 import com.n26.utls.ApiResponseMessage;
-import com.n26.utls.ApiTestUtils;
 import com.n26.utls.MessageConstant;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.io.FileUtils;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mockito;
@@ -29,6 +32,9 @@ import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilde
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
 
+import java.io.File;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.Map;
@@ -52,8 +58,10 @@ public class TransactionControllerTest {
     @Autowired
     private MockMvc mockMvc;
 
-    @Autowired
-    private ObjectMapper objectMapper;
+    private ApiTestUtils apiTestUtils;
+
+//    @Autowired
+//    public ObjectMapper objectMapper;
 
     @MockBean
     private TransactionService transactionService;
@@ -62,6 +70,11 @@ public class TransactionControllerTest {
     private StatisticsService statisticsService;
 
 
+    @BeforeEach
+    void init() {
+
+        apiTestUtils = new ApiTestUtils();
+    }
 
 
     @Test
@@ -70,7 +83,7 @@ public class TransactionControllerTest {
         final LocalDateTime localDateTimeNowMinusSeconds = LocalDateTime.now(ZoneOffset.UTC).minusSeconds(10);
         Transaction transaction = Transaction.createTransactionWithProvidedData(100.50, localDateTimeNowMinusSeconds);
 
-        final String transactionStr =  convertTransactionToJSONString(transaction);
+        final String transactionStr = apiTestUtils.convertTransactionToJSONString(transaction);
 
         Mockito.when(transactionService.createTransaction(Mockito.any(TransactionDto.class))).thenReturn(transaction);
 
@@ -86,7 +99,7 @@ public class TransactionControllerTest {
         resultActions.andExpect(status().isCreated())
             .andExpect(jsonPath("$.amount", is(100.5)))
             .andExpect(jsonPath("$.timestamp", is(localDateTimeNowMinusSeconds.toString())))
-            .andExpect(MockMvcResultMatchers.content().string(this.objectMapper.writeValueAsString(transaction)));
+            .andExpect(MockMvcResultMatchers.content().json(apiTestUtils.getCon(transaction)));
 
     }
 
@@ -97,7 +110,7 @@ public class TransactionControllerTest {
         final LocalDateTime localDateTimeNowPlusSeconds = LocalDateTime.now(ZoneOffset.UTC).plusSeconds(30);
         Transaction transaction = Transaction.createTransactionWithProvidedData(100.50, localDateTimeNowPlusSeconds);
 
-        final String transactionStr = convertTransactionToJSONString(transaction);
+        final String transactionStr = apiTestUtils.convertTransactionToJSONString(transaction);
 
 
         Mockito.when(transactionService.createTransaction(Mockito.any(TransactionDto.class))).thenReturn(transaction);
@@ -113,7 +126,7 @@ public class TransactionControllerTest {
         final Map<String, Object> expectedResponseMap = ApiResponseMessage.getGenericApiResponse(Boolean.FALSE, HttpStatus.UNPROCESSABLE_ENTITY,
             MessageConstant.FUTURE_DATE_TRANSACTION);
 
-        String expectedResponseString = convertExpectedResponseMapToString(expectedResponseMap);
+        String expectedResponseString = apiTestUtils.convertExpectedResponseMapToString(expectedResponseMap);
 
         resultActions.andExpect(status().isUnprocessableEntity())
             .andExpect(MockMvcResultMatchers.content().json(expectedResponseString));
@@ -127,7 +140,7 @@ public class TransactionControllerTest {
         final LocalDateTime localDateTimeNowMinusSeconds = LocalDateTime.now(ZoneOffset.UTC).minusSeconds(65);
         Transaction transaction = Transaction.createTransactionWithProvidedData(100.50, localDateTimeNowMinusSeconds);
 
-        final String transactionStr = convertTransactionToJSONString(transaction);
+        final String transactionStr = apiTestUtils.convertTransactionToJSONString(transaction);
 
 
         Mockito.when(transactionService.createTransaction(Mockito.any(TransactionDto.class))).thenReturn(transaction);
@@ -143,7 +156,7 @@ public class TransactionControllerTest {
         final Map<String, Object> expectedResponseMap = ApiResponseMessage.getGenericApiResponse(Boolean.FALSE, HttpStatus.NO_CONTENT,
             MessageConstant.OLDER_TRANSACTION);
 
-        final String expectedResponseString = convertExpectedResponseMapToString(expectedResponseMap);
+        final String expectedResponseString = apiTestUtils.convertExpectedResponseMapToString(expectedResponseMap);
 
         resultActions.andExpect(status().isNoContent())
             .andExpect(MockMvcResultMatchers.content().json(expectedResponseString));
@@ -155,7 +168,7 @@ public class TransactionControllerTest {
     public void post_createsNewTransactionWithTimestampAndInvalidAmount_andReturnsUnprocessableEntityEntityJSON() throws Exception {
 
         final String FILE_LOC = "src/it/resources/testcases/TransactionWithUnParsableData_1.sjon";
-        String content = ApiTestUtils.getFileContentWithLocation(FILE_LOC);
+        String content = apiTestUtils.getFileContentWithLocation(FILE_LOC);
 
         Mockito.when(transactionService.createTransaction(Mockito.any(TransactionDto.class))).thenReturn(Transaction.builder().build());
 
@@ -168,9 +181,9 @@ public class TransactionControllerTest {
         final ResultActions resultActions = mockMvc.perform(builder);
 
         final Map<String, Object> expectedResponseMap = ApiResponseMessage.getGenericApiResponse(Boolean.FALSE, HttpStatus.UNPROCESSABLE_ENTITY,
-            ApiTestUtils.getCustomMessageForEntityFieldParsingException("\"sdss\"", "AMOUNT"));
+            apiTestUtils.getCustomMessageForEntityFieldParsingException("\"sdss\"", "AMOUNT"));
 
-        final String expectedResponseString = convertExpectedResponseMapToString(expectedResponseMap);
+        final String expectedResponseString = apiTestUtils.convertExpectedResponseMapToString(expectedResponseMap);
 
         resultActions.andExpect(status().isUnprocessableEntity())
             .andExpect(MockMvcResultMatchers.content().json(expectedResponseString));
@@ -181,7 +194,7 @@ public class TransactionControllerTest {
     public void post_createsNewTransactionWithInvalidTimestampAndCorrectAmount_andReturnsUnprocessableEntityEntityJSON() throws Exception {
 
         final String FILE_NAME = "src/it/resources/testcases/TransactionWithUnParsableData_2.sjon";
-        String content = ApiTestUtils.getFileContentWithLocation(FILE_NAME);
+        String content = apiTestUtils.getFileContentWithLocation(FILE_NAME);
 
         Mockito.when(transactionService.createTransaction(Mockito.any(TransactionDto.class))).thenReturn(Transaction.builder().build());
 
@@ -194,9 +207,9 @@ public class TransactionControllerTest {
         final ResultActions resultActions = mockMvc.perform(builder);
 
         final Map<String, Object> expectedResponseMap = ApiResponseMessage.getGenericApiResponse(Boolean.FALSE, HttpStatus.UNPROCESSABLE_ENTITY,
-            ApiTestUtils.getCustomMessageForEntityFieldParsingException("\"sdsfsf\"", "LOCAL_DATE_TIME"));
+            apiTestUtils.getCustomMessageForEntityFieldParsingException("\"sdsfsf\"", "LOCAL_DATE_TIME"));
 
-        final String expectedResponseString = convertExpectedResponseMapToString(expectedResponseMap);
+        final String expectedResponseString = apiTestUtils.convertExpectedResponseMapToString(expectedResponseMap);
 
         resultActions.andExpect(status().isUnprocessableEntity())
             .andExpect(MockMvcResultMatchers.content().json(expectedResponseString));
@@ -221,7 +234,7 @@ public class TransactionControllerTest {
         final Map<String, Object> expectedResponseMap = ApiResponseMessage.getGenericApiResponse(Boolean.FALSE, HttpStatus.BAD_REQUEST,
             "JSON parse error,  Unrecognized token 'some'");
 
-        final String expectedResponseString = convertExpectedResponseMapToString(expectedResponseMap);
+        final String expectedResponseString = apiTestUtils.convertExpectedResponseMapToString(expectedResponseMap);
 
         resultActions.andExpect(status().isBadRequest())
             .andExpect(MockMvcResultMatchers.content().json(expectedResponseString));
@@ -287,12 +300,12 @@ public class TransactionControllerTest {
         Mockito.when(statisticsService.getTransactionsStatistics()).thenReturn(null);
 
         final Map<String, Object> expectedResponseMap = ApiResponseMessage.getGenericApiResponse(
-                                                                                                Boolean.FALSE,
-                                                                                                HttpStatus.NOT_FOUND,
-                                                                                                MessageConstant.STATISTICS_RESOURCE_NOT_FOUND_MSG
-                                                                                            );
+            Boolean.FALSE,
+            HttpStatus.NOT_FOUND,
+            MessageConstant.STATISTICS_RESOURCE_NOT_FOUND_MSG
+        );
 
-        final String expectedResponseString = convertExpectedResponseMapToString(expectedResponseMap);
+        final String expectedResponseString = apiTestUtils.convertExpectedResponseMapToString(expectedResponseMap);
 
         final MockHttpServletRequestBuilder builder = MockMvcRequestBuilders.get("/statistics").contentType(MediaType.APPLICATION_JSON)
                                                           .accept(MediaType.APPLICATION_JSON)
@@ -313,12 +326,12 @@ public class TransactionControllerTest {
         Mockito.when(transactionService.deleteAllTransactions()).thenReturn(true);
 
         final Map<String, Object> expectedResponseMap = ApiResponseMessage.getGenericApiResponse(
-                                                                                                Boolean.TRUE,
-                                                                                                HttpStatus.NO_CONTENT,
-                                                                                                MessageConstant.ALL_TRANSACTIONS_DELETED
-                                                                                            );
+            Boolean.TRUE,
+            HttpStatus.NO_CONTENT,
+            MessageConstant.ALL_TRANSACTIONS_DELETED
+        );
 
-        final String expectedResponseString = convertExpectedResponseMapToString(expectedResponseMap);
+        final String expectedResponseString = apiTestUtils.convertExpectedResponseMapToString(expectedResponseMap);
 
 
         final MockHttpServletRequestBuilder builder = MockMvcRequestBuilders.delete("/transactions")
@@ -341,12 +354,12 @@ public class TransactionControllerTest {
         Mockito.when(transactionService.deleteAllTransactions()).thenReturn(false);
 
         final Map<String, Object> expectedResponseMap = ApiResponseMessage.getGenericApiResponse(
-                                                                                                Boolean.FALSE,
-                                                                                                HttpStatus.NOT_FOUND,
-                                                                                                MessageConstant.TRANSACTIONS_DELETE_UN_SUCCESS_MSG
-                                                                                            );
+            Boolean.FALSE,
+            HttpStatus.NOT_FOUND,
+            MessageConstant.TRANSACTIONS_DELETE_UN_SUCCESS_MSG
+        );
 
-        final String expectedResponseString = convertExpectedResponseMapToString(expectedResponseMap);
+        final String expectedResponseString = apiTestUtils.convertExpectedResponseMapToString(expectedResponseMap);
 
 
         final MockHttpServletRequestBuilder builder = MockMvcRequestBuilders.delete("/transactions")
@@ -363,24 +376,78 @@ public class TransactionControllerTest {
     }
 
 
-    public String convertTransactionToJSONString(Transaction transaction) throws JSONException, JsonProcessingException {
+    public static class ApiTestUtils {
 
-        final String transactionJSON = this.objectMapper.writeValueAsString(transaction);
-        JSONObject transactionJsonObject = new JSONObject(transactionJSON);
 
-        transactionJsonObject.remove("uuid");
+        private final ObjectMapper objectMapper;
 
-        final String transactionStr = transactionJsonObject.toString();
+        public ApiTestUtils() {
 
-        return  transactionStr;
+            objectMapper = new ObjectMapper();
+            objectMapper.registerModule(new JavaTimeModule());
+
+            objectMapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+        }
+
+        public String getCon(Transaction transaction) throws JsonProcessingException {
+
+
+            return this.objectMapper.writeValueAsString(transaction);
+        }
+
+        public String convertTransactionToJSONString(Transaction transaction) throws JSONException, JsonProcessingException {
+
+            final String transactionJSON = this.objectMapper.writeValueAsString(transaction);
+            JSONObject transactionJsonObject = new JSONObject(transactionJSON);
+
+            transactionJsonObject.remove("uuid");
+
+            final String transactionStr = transactionJsonObject.toString();
+
+            return transactionStr;
+        }
+
+        public String getCustomMessageForEntityFieldParsingException(String field, String fieldType) {
+
+            String result;
+
+            switch (fieldType) {
+
+                case "LOCAL_DATE_TIME" -> {
+
+                    result = "JSON parse error,  Cannot deserialize value of type `java.time.LocalDateTime` from String " + field;
+                }
+
+                case "AMOUNT" -> {
+
+                    result = "JSON parse error,  Cannot deserialize value of type `java.math.BigDecimal` from String " + field;
+                }
+
+                default -> {
+                    log.error("We dont have this field type in the transaction entity");
+                    return null;
+                }
+            }
+
+            return result;
+        }
+
+
+        public String getFileContentWithLocation(String location) throws IOException {
+
+            String content = FileUtils.readFileToString(new File(location), StandardCharsets.UTF_8);
+
+            return content;
+        }
+
+
+        public String convertExpectedResponseMapToString(Map<String, Object> expectedResponseMap) {
+
+            JSONObject expectedResponseMapJSON = new JSONObject(expectedResponseMap);
+
+            return expectedResponseMapJSON.toString();
+        }
+
     }
-
-    public String convertExpectedResponseMapToString(Map<String, Object> expectedResponseMap){
-
-        JSONObject expectedResponseMapJSON = new JSONObject(expectedResponseMap);
-
-        return expectedResponseMapJSON.toString();
-    }
-
 
 }
