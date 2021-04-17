@@ -27,6 +27,7 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
 
 import java.io.File;
+import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.nio.charset.StandardCharsets;
@@ -51,9 +52,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 public class TransactionControllerTest {
 
 
-    private final UUID RANDOM_TRANSACTION_UUID = UUID.randomUUID();
-
-
     @Autowired
     private MockMvc mockMvc;
 
@@ -71,7 +69,7 @@ public class TransactionControllerTest {
     public void post_createsNewTransactionWithCorrectTimestampAndAmount_andReturnsCreatedTransactionJSON() throws Exception {
 
         final LocalDateTime localDateTimeNowMinusSeconds = LocalDateTime.now(ZoneOffset.UTC).minusSeconds(10);
-        Transaction transaction = createTransactionWithProvidedData(100.50, localDateTimeNowMinusSeconds);
+        Transaction transaction = TransactionControllerTestUtils.createTransactionWithProvidedData(100.50, localDateTimeNowMinusSeconds);
 
         // make transaction JSON string
         final String transactionJSON = this.objectMapper.writeValueAsString(transaction);
@@ -105,7 +103,7 @@ public class TransactionControllerTest {
     public void post_createsNewTransactionWithFutureTimestampAndCorrectAmount_andReturnsUnProcessableEntityJSON() throws Exception {
 
         final LocalDateTime localDateTimeNowPlusSeconds = LocalDateTime.now(ZoneOffset.UTC).plusSeconds(30);
-        Transaction transaction = createTransactionWithProvidedData(100.50, localDateTimeNowPlusSeconds);
+        Transaction transaction = TransactionControllerTestUtils.createTransactionWithProvidedData(100.50, localDateTimeNowPlusSeconds);
 
         final String transactionJSON = this.objectMapper.writeValueAsString(transaction);
         JSONObject transactionJsonObject = new JSONObject(transactionJSON);
@@ -142,7 +140,7 @@ public class TransactionControllerTest {
     public void post_createsNewTransactionWithPastTimestampAndCorrectAmount_andReturnsNonContentJSON() throws Exception {
 
         final LocalDateTime localDateTimeNowMinusSeconds = LocalDateTime.now(ZoneOffset.UTC).minusSeconds(65);
-        Transaction transaction = createTransactionWithProvidedData(100.50, localDateTimeNowMinusSeconds);
+        Transaction transaction = TransactionControllerTestUtils.createTransactionWithProvidedData(100.50, localDateTimeNowMinusSeconds);
 
         final String transactionJSON = this.objectMapper.writeValueAsString(transaction);
         JSONObject transactionJsonObject = new JSONObject(transactionJSON);
@@ -178,7 +176,7 @@ public class TransactionControllerTest {
     public void post_createsNewTransactionWithTimestampAndInvalidAmount_andReturnsUnprocessableEntityEntityJSON() throws Exception {
 
 
-        String content = FileUtils.readFileToString(new File("src/it/resources/testcases/TransactionWithUnParsableData_1.sjon"), StandardCharsets.UTF_8);
+        String content = TransactionControllerTestUtils.getFileContentWithLocation("src/it/resources/testcases/TransactionWithUnParsableData_1.sjon");
 
         Mockito.when(transactionService.createTransaction(Mockito.any(TransactionDto.class))).thenReturn(Transaction.builder().build());
 
@@ -191,7 +189,7 @@ public class TransactionControllerTest {
         final ResultActions resultActions = mockMvc.perform(builder);
 
         final Map<String, Object> expectedResponseMap = ApiResponseMessage.getGenericApiResponse(Boolean.FALSE, HttpStatus.UNPROCESSABLE_ENTITY,
-            "JSON parse error,  Cannot deserialize value of type `java.math.BigDecimal` from String \"sdss\"");
+            TransactionControllerTestUtils.getCustomMessageForEntityFieldParsingException("\"sdss\"", "AMOUNT"));
 
         JSONObject expectedResponseMapJSON = new JSONObject(expectedResponseMap);
 
@@ -202,18 +200,91 @@ public class TransactionControllerTest {
     }
 
 
-    private Transaction createTransactionWithProvidedData(Double amount, LocalDateTime minus) {
+    @Test
+    public void post_createsNewTransactionWithInvalidTimestampAndCorrectAmount_andReturnsUnprocessableEntityEntityJSON() throws Exception {
 
-        Transaction transaction = Transaction
-                                      .builder()
-                                      .amount(BigDecimal.valueOf(100.50).setScale(2, RoundingMode.HALF_UP))
-                                      .timestamp(minus)
-                                      .uuid(RANDOM_TRANSACTION_UUID)
-                                      .build();
+        String content = TransactionControllerTestUtils.getFileContentWithLocation("src/it/resources/testcases/TransactionWithUnParsableData_2.sjon");
 
-        log.info("created a new transaction using the provided data = " + transaction.toString());
+        Mockito.when(transactionService.createTransaction(Mockito.any(TransactionDto.class))).thenReturn(Transaction.builder().build());
 
-        return transaction;
+        final MockHttpServletRequestBuilder builder = MockMvcRequestBuilders.post("/transactions")
+                                                          .contentType(MediaType.APPLICATION_JSON_VALUE)
+                                                          .accept(MediaType.APPLICATION_JSON)
+                                                          .characterEncoding("UTF-8")
+                                                          .content(content);
+
+        final ResultActions resultActions = mockMvc.perform(builder);
+
+        final Map<String, Object> expectedResponseMap = ApiResponseMessage.getGenericApiResponse(Boolean.FALSE, HttpStatus.UNPROCESSABLE_ENTITY,
+            TransactionControllerTestUtils.getCustomMessageForEntityFieldParsingException("\"sdsfsf\"", "LOCAL_DATE_TIME"));
+
+        JSONObject expectedResponseMapJSON = new JSONObject(expectedResponseMap);
+
+        final String expectedResponseString = expectedResponseMapJSON.toString();
+
+        resultActions.andExpect(status().isUnprocessableEntity())
+            .andExpect(MockMvcResultMatchers.content().json(expectedResponseString));
+    }
+
+
+
+
+
+    /*
+     * this class provides the custom Utilities for the executing the transaction controller test
+     * */
+    private static class TransactionControllerTestUtils {
+
+
+        private static final UUID RANDOM_TRANSACTION_UUID = UUID.randomUUID();
+
+        public static String getCustomMessageForEntityFieldParsingException(String field, String fieldType) {
+
+            String result = null;
+
+            switch (fieldType) {
+
+                case "LOCAL_DATE_TIME" -> {
+
+                    result = "JSON parse error,  Cannot deserialize value of type `java.time.LocalDateTime` from String " + field;
+                }
+
+                case "AMOUNT" -> {
+
+                    result = "JSON parse error,  Cannot deserialize value of type `java.math.BigDecimal` from String " + field;
+                }
+
+                default -> {
+                    log.error("We dont have this field type in the transaction entity");
+                    return null;
+                }
+            }
+
+            return result;
+        }
+
+
+        public static String getFileContentWithLocation(String location) throws IOException {
+
+            String content = FileUtils.readFileToString(new File(location), StandardCharsets.UTF_8);
+
+            return content;
+        }
+
+
+        public static Transaction createTransactionWithProvidedData(Double amount, LocalDateTime minus) {
+
+            Transaction transaction = Transaction
+                                          .builder()
+                                          .amount(BigDecimal.valueOf(100.50).setScale(2, RoundingMode.HALF_UP))
+                                          .timestamp(minus)
+                                          .uuid(RANDOM_TRANSACTION_UUID)
+                                          .build();
+
+            log.info("created a new transaction using the provided data = " + transaction.toString());
+
+            return transaction;
+        }
     }
 
 }

@@ -2,6 +2,7 @@ package com.n26.utls;
 
 import com.n26.model.Transaction;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -11,6 +12,7 @@ import java.util.List;
  * Created by Chaklader on Apr, 2021
  */
 @Slf4j
+@Component
 public class TransactionCollectors {
 
     private static final List<Transaction> transactionList;
