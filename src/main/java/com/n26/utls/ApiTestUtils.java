@@ -45,6 +45,8 @@ public class ApiTestUtils {
 
         final String transactionStr = transactionJsonObject.toString();
 
+        log.info("converted Transaction entity to the JSON string");
+
         return transactionStr;
     }
 
@@ -78,6 +80,7 @@ public class ApiTestUtils {
 
         String content = FileUtils.readFileToString(new File(location), StandardCharsets.UTF_8);
 
+        log.info("Read file data using location as String ... ");
         return content;
     }
 
