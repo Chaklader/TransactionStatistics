@@ -4,7 +4,6 @@ package com.n26.exceptionhandling;//package com.n26.exceptionhandling;
 import com.fasterxml.jackson.databind.exc.InvalidFormatException;
 import com.n26.exceptionhandling.apierror.ApiErrorResponse;
 import com.n26.utls.ApiResponseMessage;
-import com.n26.utls.MessageConstant;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpHeaders;
@@ -19,7 +18,6 @@ import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseBody;
-import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.context.request.ServletWebRequest;
 import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
@@ -34,6 +32,9 @@ import java.util.Arrays;
 import static org.springframework.http.HttpStatus.BAD_REQUEST;
 
 
+
+
+
 /**
  * Created by Chaklader on Apr, 2021
  */
@@ -41,6 +42,8 @@ import static org.springframework.http.HttpStatus.BAD_REQUEST;
 @ControllerAdvice
 
 public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
+
+
 
 
     @Override

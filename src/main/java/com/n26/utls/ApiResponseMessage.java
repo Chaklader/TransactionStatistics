@@ -19,6 +19,7 @@ public class ApiResponseMessage {
     private static Map<String, Object> apiResponse;
 
 
+
     public static Map<String, Object> getGenericApiResponse(Boolean isSuccessful, HttpStatus httpStatusCode, String message) {
 
         apiResponse = new LinkedHashMap<>();
@@ -42,6 +43,7 @@ public class ApiResponseMessage {
         return apiResponse;
     }
 
+
     public static Map<String, Object> getInternalServerError() {
 
         apiResponse = new LinkedHashMap<>();
@@ -52,6 +54,7 @@ public class ApiResponseMessage {
 
         return apiResponse;
     }
+
 
     public static Map<String, Object> getBuildValidationErrors(Set<ConstraintViolation<Object>> validateErrors) {
 
@@ -73,4 +76,6 @@ public class ApiResponseMessage {
 
         return apiResponse;
     }
+
+
 }

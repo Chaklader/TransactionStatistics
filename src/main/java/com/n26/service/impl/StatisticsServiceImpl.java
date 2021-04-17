@@ -4,12 +4,12 @@ package com.n26.service.impl;
 import com.n26.model.Statistics;
 import com.n26.model.Transaction;
 import com.n26.service.StatisticsService;
-import com.n26.utls.StatisticsUtils;
 import com.n26.utls.TransactionCollectors;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -27,10 +27,10 @@ import java.util.stream.Collectors;
  * Created by Chaklader on Apr, 2021
  */
 @Slf4j
+@Transactional
 
 @Service
 public class StatisticsServiceImpl implements StatisticsService {
-
 
 
     @Autowired
@@ -38,7 +38,7 @@ public class StatisticsServiceImpl implements StatisticsService {
 
 
     @Override
-    public synchronized Statistics getTransactionsStatistics() {
+    public Statistics getTransactionsStatistics() {
 
         try {
 
@@ -46,7 +46,7 @@ public class StatisticsServiceImpl implements StatisticsService {
 
             if (transactions.isEmpty()) {
 
-                return StatisticsUtils.createEmptyStatisticsPojo();
+                return Statistics.createEmptyStatisticsPojo();
             }
 
 
@@ -104,6 +104,14 @@ public class StatisticsServiceImpl implements StatisticsService {
         return transactions;
     }
 
+
+    /**
+     * the transactions are sorted ascending order, that means the oldest transaction is at index 0
+     * and we will only remove transactions that has the timestamp >= of 60 sec from the current time.
+     * <p>
+     * if the condition is not true, we will simply break as the next items of the iterations will not
+     * be able to full-fill the condition
+     */
     private void deleteOlderTransaction(List<Transaction> transactions) {
 
         final int initialTransactionsSize = transactions.size();

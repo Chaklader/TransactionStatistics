@@ -1,44 +1,42 @@
 package com.n26.utls;
 
+
 import com.n26.model.Transaction;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 
+
 /**
  * Created by Chaklader on Apr, 2021
  */
+
+@Transactional
 @Slf4j
+
 @Component
 public class TransactionCollectors {
-
 
 
     private static final List<Transaction> transactionList;
 
     static {
 
-        transactionList = new ArrayList<>() {
-
-            @Override
-            public boolean add(Transaction transaction) {
-
-                super.add(transaction);
-
-                transactionList.sort(Comparator.comparing(Transaction::getTimestamp));
-                return true;
-            }
-        };
+        transactionList = new ArrayList<>();
     }
 
-    public synchronized void addTransaction(Transaction transaction) {
+
+    public void addTransaction(Transaction transaction) {
 
         try {
             final List<Transaction> transactionList = getTransactionList();
             final boolean isTransactionAdded = transactionList.add(transaction);
+
+            transactionList.sort(Comparator.comparing(Transaction::getTimestamp));
 
             log.info("add a new transaction to the transactions collector");
 
@@ -48,7 +46,7 @@ public class TransactionCollectors {
         }
     }
 
-    public synchronized List<Transaction> getTransactionList() {
+    public List<Transaction> getTransactionList() {
 
         return transactionList;
     }

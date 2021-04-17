@@ -8,6 +8,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.UUID;
@@ -16,16 +17,20 @@ import java.util.UUID;
 /**
  * Created by Chaklader on Apr, 2021
  */
+@Transactional
 @Service
+
 @Slf4j
 public class TransactionServiceImpl implements TransactionService {
+
 
 
     @Autowired
     private TransactionCollectors transactionCollectors;
 
+
     @Override
-    public synchronized Transaction createTransaction(TransactionDto transactionDto) {
+    public Transaction createTransaction(TransactionDto transactionDto) {
 
         try {
             final Transaction transaction = Transaction.builder()
@@ -39,6 +44,7 @@ public class TransactionServiceImpl implements TransactionService {
             return transaction;
 
         } catch (Exception ex) {
+
             log.error("Error occurred while create new transaction ::" + ex.getMessage());
         }
 
@@ -47,7 +53,7 @@ public class TransactionServiceImpl implements TransactionService {
 
     @CacheEvict(value = "transactions", allEntries = true)
     @Override
-    public synchronized boolean deleteAllTransactions() {
+    public boolean deleteAllTransactions() {
 
         try {
             final List<Transaction> transactions = transactionCollectors.getTransactionList();
