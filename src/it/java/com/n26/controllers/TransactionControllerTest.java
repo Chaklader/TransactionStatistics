@@ -48,10 +48,12 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 public class TransactionControllerTest {
 
 
+
+    private static ApiTestUtils apiTestUtils;
+
     @Autowired
     private MockMvc mockMvc;
 
-    private static ApiTestUtils apiTestUtils;
 
 
     @MockBean
@@ -59,6 +61,7 @@ public class TransactionControllerTest {
 
     @MockBean
     private StatisticsService statisticsService;
+
 
 
     @BeforeAll
@@ -73,6 +76,7 @@ public class TransactionControllerTest {
 
         apiTestUtils = null;
     }
+
 
 
     @Test
