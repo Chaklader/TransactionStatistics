@@ -304,7 +304,7 @@ public class TransactionControllerTest {
 
 
     @Test
-    public void delete_AllTransactionsWithEmptyRequestBody_returnsNoContentStatus() throws Exception {
+    public void delete_AllTransactionsWithEmptyRequestBody_asSuccessfulRequest_returnsNoContentStatusResponse() throws Exception {
 
 
         Mockito.when(transactionService.deleteAllTransactions()).thenReturn(true);
@@ -326,6 +326,33 @@ public class TransactionControllerTest {
 
         resultActions
             .andExpect(status().isNoContent())
+            .andExpect(MockMvcResultMatchers.content().json(expectedResponseString));
+
+    }
+
+
+    @Test
+    public void delete_AllTransactionsWithEmptyRequestBody_asFailedRequest_returnsNotFoundStatusResponse() throws Exception {
+
+        Mockito.when(transactionService.deleteAllTransactions()).thenReturn(false);
+
+        final Map<String, Object> expectedResponseMap = ApiResponseMessage.getGenericApiResponse(Boolean.FALSE, HttpStatus.NOT_FOUND,
+            MessageConstant.TRANSACTIONS_DELETE_UN_SUCCESS_MSG);
+
+        JSONObject expectedResponseMapJSON = new JSONObject(expectedResponseMap);
+
+        final String expectedResponseString = expectedResponseMapJSON.toString();
+
+
+        final MockHttpServletRequestBuilder builder = MockMvcRequestBuilders.delete("/transactions")
+                                                          .contentType(MediaType.APPLICATION_JSON)
+                                                          .accept(MediaType.APPLICATION_JSON)
+                                                          .characterEncoding("UTF-8");
+
+        final ResultActions resultActions = mockMvc.perform(builder);
+
+        resultActions
+            .andExpect(status().isNotFound())
             .andExpect(MockMvcResultMatchers.content().json(expectedResponseString));
 
     }
