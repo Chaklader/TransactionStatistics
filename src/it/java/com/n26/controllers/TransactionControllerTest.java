@@ -10,6 +10,7 @@ import com.n26.model.Transaction;
 import com.n26.service.StatisticsService;
 import com.n26.service.TransactionService;
 import com.n26.utls.ApiResponseMessage;
+import com.n26.utls.ApiTestUtils;
 import com.n26.utls.MessageConstant;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
@@ -60,8 +61,6 @@ public class TransactionControllerTest {
 
     private ApiTestUtils apiTestUtils;
 
-//    @Autowired
-//    public ObjectMapper objectMapper;
 
     @MockBean
     private TransactionService transactionService;
@@ -99,7 +98,7 @@ public class TransactionControllerTest {
         resultActions.andExpect(status().isCreated())
             .andExpect(jsonPath("$.amount", is(100.5)))
             .andExpect(jsonPath("$.timestamp", is(localDateTimeNowMinusSeconds.toString())))
-            .andExpect(MockMvcResultMatchers.content().json(apiTestUtils.getCon(transaction)));
+            .andExpect(MockMvcResultMatchers.content().json(apiTestUtils.convertTransactionToJSONString(transaction)));
 
     }
 
@@ -375,79 +374,5 @@ public class TransactionControllerTest {
 
     }
 
-
-    public static class ApiTestUtils {
-
-
-        private final ObjectMapper objectMapper;
-
-        public ApiTestUtils() {
-
-            objectMapper = new ObjectMapper();
-            objectMapper.registerModule(new JavaTimeModule());
-
-            objectMapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
-        }
-
-        public String getCon(Transaction transaction) throws JsonProcessingException {
-
-
-            return this.objectMapper.writeValueAsString(transaction);
-        }
-
-        public String convertTransactionToJSONString(Transaction transaction) throws JSONException, JsonProcessingException {
-
-            final String transactionJSON = this.objectMapper.writeValueAsString(transaction);
-            JSONObject transactionJsonObject = new JSONObject(transactionJSON);
-
-            transactionJsonObject.remove("uuid");
-
-            final String transactionStr = transactionJsonObject.toString();
-
-            return transactionStr;
-        }
-
-        public String getCustomMessageForEntityFieldParsingException(String field, String fieldType) {
-
-            String result;
-
-            switch (fieldType) {
-
-                case "LOCAL_DATE_TIME" -> {
-
-                    result = "JSON parse error,  Cannot deserialize value of type `java.time.LocalDateTime` from String " + field;
-                }
-
-                case "AMOUNT" -> {
-
-                    result = "JSON parse error,  Cannot deserialize value of type `java.math.BigDecimal` from String " + field;
-                }
-
-                default -> {
-                    log.error("We dont have this field type in the transaction entity");
-                    return null;
-                }
-            }
-
-            return result;
-        }
-
-
-        public String getFileContentWithLocation(String location) throws IOException {
-
-            String content = FileUtils.readFileToString(new File(location), StandardCharsets.UTF_8);
-
-            return content;
-        }
-
-
-        public String convertExpectedResponseMapToString(Map<String, Object> expectedResponseMap) {
-
-            JSONObject expectedResponseMapJSON = new JSONObject(expectedResponseMap);
-
-            return expectedResponseMapJSON.toString();
-        }
-
-    }
 
 }
