@@ -31,6 +31,7 @@ import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.Map;
 
+import static org.hamcrest.Matchers.any;
 import static org.hamcrest.Matchers.is;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -222,6 +223,35 @@ public class TransactionControllerTest {
 
         resultActions.andExpect(status().isUnprocessableEntity())
             .andExpect(MockMvcResultMatchers.content().json(expectedResponseString));
+    }
+
+
+    @Test
+    public void post_createsNewTransactionWithInvalidJson_andReturnsBadRequestResponse() throws Exception {
+
+
+        String content = "some invalid JSON data";
+
+        Mockito.when(transactionService.createTransaction(Mockito.any(TransactionDto.class))).thenReturn(Transaction.builder().build());
+
+        final MockHttpServletRequestBuilder builder = MockMvcRequestBuilders.post("/transactions")
+                                                          .contentType(MediaType.APPLICATION_JSON_VALUE)
+                                                          .accept(MediaType.APPLICATION_JSON)
+                                                          .characterEncoding("UTF-8")
+                                                          .content(content);
+
+        final ResultActions resultActions = mockMvc.perform(builder);
+
+        final Map<String, Object> expectedResponseMap = ApiResponseMessage.getGenericApiResponse(Boolean.FALSE, HttpStatus.BAD_REQUEST,
+            "JSON parse error,  Unrecognized token 'some'");
+
+        JSONObject expectedResponseMapJSON = new JSONObject(expectedResponseMap);
+
+        final String expectedResponseString = expectedResponseMapJSON.toString();
+
+        resultActions.andExpect(status().isBadRequest())
+            .andExpect(MockMvcResultMatchers.content().json(expectedResponseString));
+
     }
 
 
