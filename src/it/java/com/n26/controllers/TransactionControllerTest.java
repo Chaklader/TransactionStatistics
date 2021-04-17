@@ -1,9 +1,6 @@
 package com.n26.controllers;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+
 import com.n26.dto.TransactionDto;
 import com.n26.model.Statistics;
 import com.n26.model.Transaction;
@@ -13,10 +10,8 @@ import com.n26.utls.ApiResponseMessage;
 import com.n26.utls.ApiTestUtils;
 import com.n26.utls.MessageConstant;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.io.FileUtils;
-import org.json.JSONException;
-import org.json.JSONObject;
-import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mockito;
@@ -33,9 +28,6 @@ import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilde
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
 
-import java.io.File;
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.Map;
@@ -59,7 +51,7 @@ public class TransactionControllerTest {
     @Autowired
     private MockMvc mockMvc;
 
-    private ApiTestUtils apiTestUtils;
+    private static ApiTestUtils apiTestUtils;
 
 
     @MockBean
@@ -69,10 +61,17 @@ public class TransactionControllerTest {
     private StatisticsService statisticsService;
 
 
-    @BeforeEach
-    void init() {
+    @BeforeAll
+    public static void setup() {
 
+        log.info("creating new ApiTestUtils instance for the controller testing");
         apiTestUtils = new ApiTestUtils();
+    }
+
+    @AfterAll
+    public static void tearDown() {
+
+        apiTestUtils = null;
     }
 
 
