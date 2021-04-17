@@ -15,20 +15,30 @@ import java.util.List;
 @Component
 public class TransactionCollectors {
 
+
+
     private static final List<Transaction> transactionList;
 
     static {
 
-        transactionList = new ArrayList<>();
+        transactionList = new ArrayList<>() {
+
+            @Override
+            public boolean add(Transaction transaction) {
+
+                super.add(transaction);
+
+                transactionList.sort(Comparator.comparing(Transaction::getTimestamp));
+                return true;
+            }
+        };
     }
 
-    public synchronized  void addTransaction(Transaction transaction) {
+    public synchronized void addTransaction(Transaction transaction) {
 
         try {
             final List<Transaction> transactionList = getTransactionList();
-
             final boolean isTransactionAdded = transactionList.add(transaction);
-            transactionList.sort(Comparator.comparing(Transaction::getTimestamp));
 
             log.info("add a new transaction to the transactions collector");
 
@@ -38,7 +48,7 @@ public class TransactionCollectors {
         }
     }
 
-    public synchronized  List<Transaction> getTransactionList() {
+    public synchronized List<Transaction> getTransactionList() {
 
         return transactionList;
     }
