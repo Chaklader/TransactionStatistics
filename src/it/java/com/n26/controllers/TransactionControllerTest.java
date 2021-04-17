@@ -2,11 +2,13 @@ package com.n26.controllers;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.n26.dto.TransactionDto;
+import com.n26.model.Statistics;
 import com.n26.model.Transaction;
 import com.n26.service.StatisticsService;
 import com.n26.service.TransactionService;
 import com.n26.utls.ApiResponseMessage;
 import com.n26.utls.MessageConstant;
+import com.n26.utls.StatisticsUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.json.JSONObject;
 import org.junit.jupiter.api.Test;
@@ -196,7 +198,10 @@ public class TransactionControllerTest {
     @Test
     public void post_createsNewTransactionWithInvalidTimestampAndCorrectAmount_andReturnsUnprocessableEntityEntityJSON() throws Exception {
 
-        String content = TransactionControllerTestUtils.getFileContentWithLocation("src/it/resources/testcases/TransactionWithUnParsableData_2.sjon");
+
+        final String FILE_NAME = "src/it/resources/testcases/TransactionWithUnParsableData_2.sjon";
+
+        String content = TransactionControllerTestUtils.getFileContentWithLocation(FILE_NAME);
 
         Mockito.when(transactionService.createTransaction(Mockito.any(TransactionDto.class))).thenReturn(Transaction.builder().build());
 
@@ -216,6 +221,84 @@ public class TransactionControllerTest {
         final String expectedResponseString = expectedResponseMapJSON.toString();
 
         resultActions.andExpect(status().isUnprocessableEntity())
+            .andExpect(MockMvcResultMatchers.content().json(expectedResponseString));
+    }
+
+
+    @Test
+    public void get_transactionStatisticsUsingWithEmptyRequestBody_AndCorrectData_returnsOkWithCorrectStatistics() throws Exception {
+
+        final Statistics statistics = Statistics.builder()
+                                          .sum("100.00")
+                                          .avg("12.5")
+                                          .max("45.00")
+                                          .min("31.50")
+                                          .count(100L)
+                                          .build();
+
+        Mockito.when(statisticsService.getTransactionsStatistics()).thenReturn(statistics);
+
+
+        mockMvc.perform(MockMvcRequestBuilders.get("/statistics").contentType(MediaType.APPLICATION_JSON)
+                            .accept(MediaType.APPLICATION_JSON)
+                            .characterEncoding("UTF-8"))
+
+            .andExpect(status().isOk())
+
+            .andExpect(jsonPath("$.sum", is("100.00")))
+            .andExpect(jsonPath("$.avg", is("12.5")))
+            .andExpect(jsonPath("$.max", is("45.00")))
+            .andExpect(jsonPath("$.min", is("31.50")))
+            .andExpect(jsonPath("$.count", is(100)));
+    }
+
+
+    @Test
+    public void get_transactionStatisticsUsingWithEmptyRequestBody_AndEmptyData_returnsOkWithCorrectStatistics() throws Exception {
+
+
+        final Statistics EMPTY_STATISTICS = StatisticsUtils.createEmptyStatisticsPojo();
+
+        Mockito.when(statisticsService.getTransactionsStatistics()).thenReturn(EMPTY_STATISTICS);
+
+
+        mockMvc.perform(MockMvcRequestBuilders.get("/statistics").contentType(MediaType.APPLICATION_JSON)
+                            .accept(MediaType.APPLICATION_JSON)
+                            .characterEncoding("UTF-8"))
+
+            .andExpect(status().isOk())
+
+            .andExpect(jsonPath("$.sum", is("0.00")))
+            .andExpect(jsonPath("$.avg", is("0.00")))
+            .andExpect(jsonPath("$.max", is("0.00")))
+            .andExpect(jsonPath("$.min", is("0.00")))
+            .andExpect(jsonPath("$.count", is(0)));
+    }
+
+
+    @Test
+    public void get_transactionStatisticsUsingWithEmptyRequestBody_AndNullData_returnsNotFoundStatistics() throws Exception {
+
+        Mockito.when(statisticsService.getTransactionsStatistics()).thenReturn(null);
+
+
+        final Map<String, Object> expectedResponseMap = ApiResponseMessage.getGenericApiResponse(Boolean.FALSE,
+                                                                                                HttpStatus.NOT_FOUND,
+                                                                                                MessageConstant.STATISTICS_RESOURCE_NOT_FOUND_MSG);
+
+        JSONObject expectedResponseMapJSON = new JSONObject(expectedResponseMap);
+
+        final String expectedResponseString = expectedResponseMapJSON.toString();
+
+
+        final MockHttpServletRequestBuilder builder = MockMvcRequestBuilders.get("/statistics").contentType(MediaType.APPLICATION_JSON)
+                                                                                .accept(MediaType.APPLICATION_JSON)
+                                                                                .characterEncoding("UTF-8");
+
+        final ResultActions resultActions = mockMvc.perform(builder);
+
+        resultActions
+            .andExpect(status().isNotFound())
             .andExpect(MockMvcResultMatchers.content().json(expectedResponseString));
     }
 

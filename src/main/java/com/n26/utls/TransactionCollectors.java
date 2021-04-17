@@ -22,7 +22,7 @@ public class TransactionCollectors {
         transactionList = new ArrayList<>();
     }
 
-    public synchronized static void addTransaction(Transaction transaction) {
+    public synchronized  void addTransaction(Transaction transaction) {
 
         try {
             final List<Transaction> transactionList = getTransactionList();
@@ -38,7 +38,7 @@ public class TransactionCollectors {
         }
     }
 
-    public synchronized static List<Transaction> getTransactionList() {
+    public synchronized  List<Transaction> getTransactionList() {
 
         return transactionList;
     }

@@ -4,8 +4,10 @@ package com.n26.service.impl;
 import com.n26.model.Statistics;
 import com.n26.model.Transaction;
 import com.n26.service.StatisticsService;
+import com.n26.utls.StatisticsUtils;
 import com.n26.utls.TransactionCollectors;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.stereotype.Service;
 
@@ -29,6 +31,10 @@ import java.util.stream.Collectors;
 @Service
 public class StatisticsServiceImpl implements StatisticsService {
 
+    @Autowired
+    private TransactionCollectors transactionCollectors;
+
+
 
     @Override
     public synchronized Statistics getTransactionsStatistics() {
@@ -39,7 +45,7 @@ public class StatisticsServiceImpl implements StatisticsService {
 
             if (transactions.isEmpty()) {
 
-                return createEmptyStatisticsPojo();
+                return StatisticsUtils.createEmptyStatisticsPojo();
             }
 
 
@@ -87,7 +93,7 @@ public class StatisticsServiceImpl implements StatisticsService {
     @CacheEvict(value = "transactions", allEntries = true)
     public List<Transaction> getAllTransactions() {
 
-        final List<Transaction> transactions = TransactionCollectors.getTransactionList();
+        final List<Transaction> transactions = transactionCollectors.getTransactionList();
 
         if (transactions == null) {
 
@@ -95,24 +101,6 @@ public class StatisticsServiceImpl implements StatisticsService {
         }
 
         return transactions;
-    }
-
-
-    private static Statistics createEmptyStatisticsPojo() {
-
-        final BigDecimal zero = (BigDecimal.ZERO).setScale(2, RoundingMode.HALF_UP);
-
-        final Statistics EMPTY_STATISTICS = Statistics.builder()
-                                                .sum(String.valueOf(zero))
-                                                .avg(String.valueOf(zero))
-                                                .max(String.valueOf(zero))
-                                                .min(String.valueOf(zero))
-                                                .count(0L)
-                                                .build();
-
-        log.info("Create an empty statistics for the transactions ..");
-
-        return EMPTY_STATISTICS;
     }
 
     private void deleteOlderTransaction(List<Transaction> transactions) {

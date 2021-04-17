@@ -59,7 +59,7 @@ public class TransactionControllerTestUtils {
 
         Transaction transaction = Transaction
                                       .builder()
-                                      .amount(BigDecimal.valueOf(100.50).setScale(2, RoundingMode.HALF_UP))
+                                      .amount(BigDecimal.valueOf(amount).setScale(2, RoundingMode.HALF_UP))
                                       .timestamp(minus)
                                       .uuid(RANDOM_TRANSACTION_UUID)
                                       .build();

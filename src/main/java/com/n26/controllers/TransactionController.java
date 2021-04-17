@@ -98,7 +98,6 @@ public class TransactionController {
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "get the transaction statistics for last 60 sec", content = {
             @Content(mediaType = "application/json", schema = @Schema(implementation = Statistics.class))}),
-        @ApiResponse(responseCode = "400", description = MessageConstant.INVALID_JSON_REQUEST, content = @Content),
         @ApiResponse(responseCode = "404", description = MessageConstant.STATISTICS_RESOURCE_NOT_FOUND_MSG, content = @Content),
         @ApiResponse(responseCode = "500", description = MessageConstant.INTERNAL_SERVER_ERROR_MSG, content = @Content)})
 

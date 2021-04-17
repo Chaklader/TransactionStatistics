@@ -5,6 +5,7 @@ import com.n26.model.Transaction;
 import com.n26.service.TransactionService;
 import com.n26.utls.TransactionCollectors;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.stereotype.Service;
 
@@ -20,6 +21,9 @@ import java.util.UUID;
 public class TransactionServiceImpl implements TransactionService {
 
 
+    @Autowired
+    private TransactionCollectors transactionCollectors;
+
     @Override
     public synchronized Transaction createTransaction(TransactionDto transactionDto) {
 
@@ -30,7 +34,7 @@ public class TransactionServiceImpl implements TransactionService {
                                           .timestamp(transactionDto.getTimestamp())
                                           .build();
 
-            TransactionCollectors.addTransaction(transaction);
+            transactionCollectors.addTransaction(transaction);
 
             return transaction;
 
@@ -46,7 +50,7 @@ public class TransactionServiceImpl implements TransactionService {
     public synchronized boolean deleteAllTransactions() {
 
         try {
-            final List<Transaction> transactions = TransactionCollectors.getTransactionList();
+            final List<Transaction> transactions = transactionCollectors.getTransactionList();
 
             log.info("deleting all the transactions for the last 60 seconds");
             transactions.clear();
