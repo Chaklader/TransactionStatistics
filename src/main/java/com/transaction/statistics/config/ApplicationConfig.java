@@ -13,11 +13,13 @@ import org.springframework.scheduling.annotation.Scheduled;
 /**
  * Created by Chaklader on Apr, 2021
  */
+
+
+@Slf4j
+
 @Configuration
 @EnableScheduling
 @EnableAsync
-
-@Slf4j
 public class ApplicationConfig {
 
 
