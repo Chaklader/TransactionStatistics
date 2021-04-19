@@ -48,10 +48,10 @@
 
         Body:
 
-        {
-            "amount": "12.3343",
-            "timestamp": "2018-07-17T09:59:51.312Z"
-        }
+            {
+                "amount": "12.3343",
+                "timestamp": "2018-07-17T09:59:51.312Z"
+            }
 
 
         Where:
@@ -61,10 +61,10 @@
         -  timestamp – transaction time in the ISO 8601 format YYYY-MM-DDThh:mm:ss.sssZ in the UTC timezone
         (this is not the current timestamp) Returns: Empty body with one of the following:
 
-        {
-            "amount": "12.3343",
-            "timestamp": "2018-07-17T09:59:51.312Z"
-        }
+            {
+                "amount": "12.3343",
+                "timestamp": "2018-07-17T09:59:51.312Z"
+            }
 
         - 201 – in case of success
         - 204 –  if the transaction is older than 60 seconds
@@ -79,9 +79,9 @@
         This endpoint returns the statistics computed on the transactions within the last 60 seconds.
         Returns:
 
-        {
-        "sum": "1000.00", "avg": "100.53", "max": "200000.49", "min": "50.23", "count": 10
-        }
+            {
+                "sum": "1000.00", "avg": "100.53", "max": "200000.49", "min": "50.23", "count": 10
+            }
 
         where,
 
