@@ -2,8 +2,8 @@
 
 
 
-    Transactions statistics - Software Engineer
-    ———————————————————————————————————————————
+    Transactions statistics
+    ———————————————————————
 
 
         Requirements
