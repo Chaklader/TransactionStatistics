@@ -1,6 +1,8 @@
 
 
 
+    // TODO: implement the TTL in cache config so we dont need to delete the older transactions manually
+
 
     Transactions statistics
     ———————————————————————
