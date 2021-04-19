@@ -103,7 +103,7 @@
 
         The OpenAPI definition can be accessible in the address:
 
-            http://localhost:8080/n26-test.html
+            http://localhost:8080/transaction-statistics.html
 
 
 
