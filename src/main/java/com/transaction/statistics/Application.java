@@ -6,7 +6,7 @@ import org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration;
 import org.springframework.cache.annotation.EnableCaching;
 
 
-@EnableCaching
+//@EnableCaching
 @SpringBootApplication(exclude = {DataSourceAutoConfiguration.class })
 
 public class Application {

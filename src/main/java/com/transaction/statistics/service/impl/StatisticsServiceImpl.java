@@ -22,6 +22,8 @@ import java.util.ListIterator;
 import java.util.NoSuchElementException;
 import java.util.stream.Collectors;
 
+import static com.transaction.statistics.utls.MessageConstant.CACHE_ONE;
+
 
 /**
  * Created by Chaklader on Apr, 2021
@@ -91,7 +93,7 @@ public class StatisticsServiceImpl implements StatisticsService {
     }
 
 
-    @CacheEvict(value = "transactions", allEntries = true)
+    @CacheEvict(value = CACHE_ONE, allEntries = true)
     public List<Transaction> getAllTransactions() {
 
         final List<Transaction> transactions = transactionCollectors.getTransactionList();

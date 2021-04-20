@@ -7,6 +7,8 @@ package com.transaction.statistics.utls;
 public class MessageConstant {
 
 
+    public final static String CACHE_ONE = "cacheOne";
+
     public static final String INTERNAL_SERVER_ERROR_MSG = "Internal server error";
 
     public static final String OLDER_TRANSACTION = "Transaction is older than 60 seconds";

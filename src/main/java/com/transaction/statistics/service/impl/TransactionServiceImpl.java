@@ -13,6 +13,8 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 import java.util.UUID;
 
+import static com.transaction.statistics.utls.MessageConstant.CACHE_ONE;
+
 
 /**
  * Created by Chaklader on Apr, 2021
@@ -51,7 +53,7 @@ public class TransactionServiceImpl implements TransactionService {
         return null;
     }
 
-    @CacheEvict(value = "transactions", allEntries = true)
+    @CacheEvict(value = CACHE_ONE, allEntries = true)
     @Override
     public boolean deleteAllTransactions() {
 
