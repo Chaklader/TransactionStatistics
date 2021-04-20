@@ -7,7 +7,9 @@ import com.transaction.statistics.service.StatisticsService;
 import com.transaction.statistics.utls.TransactionCollectors;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CacheConfig;
 import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -93,7 +95,7 @@ public class StatisticsServiceImpl implements StatisticsService {
     }
 
 
-    @CacheEvict(value = CACHE_ONE, allEntries = true)
+    @Cacheable(value = CACHE_ONE, sync = true)
     public List<Transaction> getAllTransactions() {
 
         final List<Transaction> transactions = transactionCollectors.getTransactionList();
